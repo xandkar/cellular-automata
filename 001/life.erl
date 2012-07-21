@@ -6,11 +6,15 @@
 
 
 -define(DIRECTIONS, ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']).
+
 -define(X, 230).
--define(Y,  60).
+-define(Y,  58).
+
 -define(INTERVAL, 0).  % In milliseconds
--define(CHAR_DEAD,  <<" ">>).
--define(CHAR_ALIVE, <<"o">>).
+
+-define(CHAR_DEAD,  $-).
+-define(CHAR_ALIVE, $O).
+-define(CHAR_BAR,   $=).
 
 
 main(      ) -> bang(?X, ?Y).
@@ -80,7 +84,9 @@ tock(X, All, [], StatePairs) ->
             [],
             lists:sort(StatePairs)
         ),
+    ok = do_print_bar(X),
     ok = do_print_states(X, States),
+    ok = do_print_bar(X),
     ok = timer:sleep(?INTERVAL),
     tick(X, All);
 
@@ -189,6 +195,11 @@ do_print_states(X, States) ->
     {XStates, RestStates} = lists:split(X, States),
     ok = io:format([state_to_char(S) || S <- XStates] ++ "\n"),
     do_print_states(X, RestStates).
+
+
+do_print_bar(X) ->
+    Chars = [$+ | [?CHAR_BAR || _ <- lists:seq(1, X - 1)]],
+    io:format("~s~n", [Chars]).
 
 
 state_to_char(0) -> ?CHAR_DEAD;
