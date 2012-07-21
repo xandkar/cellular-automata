@@ -121,7 +121,7 @@ cell(MyID, MyParent, MyNeighbors, MyState) ->
 cell(MyID, MyParent, MyNeighbors, MyState, {[], States}) ->
     LiveNeighbors = lists:sum(States),
     MyNewState = new_state(MyState, LiveNeighbors),
-    MyParent ! {tock, {MyID, MyNewState}},
+    MyParent ! {tock, {MyID, MyState}},
     cell(MyID, MyParent, MyNeighbors, MyNewState);
 
 % Awaiting requests and replies
