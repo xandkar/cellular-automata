@@ -1,26 +1,15 @@
 -module(life).
 
--export([main/0
-        ,main/1
-        ]).
+-export([bang/1]).
 
 
 -define(DIRECTIONS, ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']).
 
--define(X, 230).
--define(Y,  58).
-
 -define(INTERVAL, 0).  % In milliseconds
 
--define(CHAR_DEAD,  $-).
--define(CHAR_ALIVE, $O).
--define(CHAR_BAR,   $=).
-
-
-main(      ) -> bang(?X, ?Y).
-main([    ]) -> bang(?X, ?Y);
-main([X   ]) -> bang(list_to_integer(X), list_to_integer(X));
-main([X, Y]) -> bang(list_to_integer(X), list_to_integer(Y)).
+-define(CHAR_DEAD,   32).  % Space
+-define(CHAR_ALIVE, 111).  % o
+-define(CHAR_BAR,    61).  % =
 
 
 %% ============================================================================
@@ -30,6 +19,10 @@ main([X, Y]) -> bang(list_to_integer(X), list_to_integer(Y)).
 %% ----------------------------------------------------------------------------
 %% Big bang
 %% ----------------------------------------------------------------------------
+
+bang([X, Y]) ->
+    bang(atom_to_integer(X), atom_to_integer(Y)).
+
 
 bang(X, Y) ->
     N = X * Y,
@@ -82,7 +75,12 @@ tock(X, All, [], StatePairs) ->
         lists:foldl(
             fun({_ID, State}, States) -> [State | States] end,
             [],
-            lists:sort(StatePairs)
+            lists:sort(
+                fun({A, _}, {B, _}) ->
+                    atom_to_integer(A) < atom_to_integer(B)
+                end,
+                StatePairs
+            )
         ),
     ok = do_print_bar(X),
     ok = do_print_states(X, States),
@@ -149,18 +147,18 @@ new_state(0, LiveNeighbors) when LiveNeighbors =:= 3 -> 1;
 new_state(State, _LiveNeighbors) -> State.
 
 
-neighbor_id(Direction, X, I) ->
-    I + offset(Direction, X).
+neighbor_id(Direction, X, ID) ->
+    ID + offset(Direction, X).
 
 
-offset('N' , X) ->  -X;
-offset('NE', X) -> -(X - 1);
-offset('E' , _) ->       1;
-offset('SE', X) ->   X + 1;
-offset('S' , X) ->   X;
-offset('SW', X) ->   X - 1;
-offset('W' , _) ->      -1;
-offset('NW', X) -> -(X + 1).
+offset('N' , X) -> ensure_negative(X);
+offset('NE', X) -> ensure_negative(X - 1);
+offset('E' , _) ->                     1;
+offset('SE', X) ->                 X + 1;
+offset('S' , X) ->                 X;
+offset('SW', X) ->                 X - 1;
+offset('W' , _) -> ensure_negative(    1);
+offset('NW', X) -> ensure_negative(X + 1).
 
 
 filter_offsides(N, IDs) ->
@@ -175,6 +173,10 @@ is_onside(_, _) -> true.
 %% ============================================================================
 %% Plumbing
 %% ============================================================================
+
+ensure_negative(N) when N < 0 -> N;
+ensure_negative(N) -> -(N).
+
 
 atom_to_integer(Atom) ->
     list_to_integer(atom_to_list(Atom)).
@@ -198,8 +200,7 @@ do_print_states(X, States) ->
 
 
 do_print_bar(X) ->
-    Chars = [$+ | [?CHAR_BAR || _ <- lists:seq(1, X - 1)]],
-    io:format("~s~n", [Chars]).
+    io:format("~s~n", [[?CHAR_BAR || _ <- lists:seq(1, X - 1)]]).
 
 
 state_to_char(0) -> ?CHAR_DEAD;
