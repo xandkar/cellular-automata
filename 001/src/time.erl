@@ -29,6 +29,7 @@
                ,num_cells       :: integer()
                ,state_pairs     :: list(tuple(integer(), integer())) | []
                ,replies_pending :: integer()
+               ,gen_count = 0   :: integer()
                }).
 
 
@@ -82,6 +83,7 @@ handle_cast({tock, {ID, CellState}},
     #state{x=X
           ,state_pairs=StatePairs
           ,replies_pending=RepliesPending
+          ,gen_count=GenCount
           }=State) ->
 
     NewStatePairs = [{ID, CellState} | StatePairs],
@@ -90,14 +92,17 @@ handle_cast({tock, {ID, CellState}},
 
     case NewRepliesPending of
         0 ->
+            NewGenCount = GenCount + 1,
             SortedStatePairs = lists:sort(NewStatePairs),
             StateChars = [state_to_char(S) || {_, S} <- SortedStatePairs],
+            ok = do_print_bar(X),
+            ok = io:format("GENERATIONS: ~b~n", [NewGenCount]),
             ok = do_print_bar(X),
             ok = do_print_state_chars(X, StateChars),
             ok = do_print_bar(X),
             ok = timer:sleep(?INTERVAL),
             cast(next_tick),
-            {noreply, NewState#state{state_pairs=[]}};
+            {noreply, NewState#state{state_pairs=[], gen_count=NewGenCount}};
 
         _N ->
             {noreply, NewState#state{state_pairs=NewStatePairs}}
