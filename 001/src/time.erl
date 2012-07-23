@@ -4,7 +4,7 @@
 
 %% API
 -export([start_link/2
-        ,cast/1
+        ,tock/2
         ]).
 
 %% Callbacks
@@ -44,8 +44,8 @@ start_link(X, Cells) ->
     gen_server:start_link(ServerName, ?MODULE, Args, Opts).
 
 
-cast(Msg) ->
-    gen_server:cast(?MODULE, Msg).
+tock(CellID, CellState) ->
+    gen_server:cast(?MODULE, {tock, {CellID, CellState}}).
 
 
 %% ============================================================================
@@ -59,7 +59,7 @@ init([X, Cells]) ->
                   ,state_pairs=[]
                   ,replies_pending=0
                   },
-    cast(next_tick),
+    schedule_next_tick(),
     {ok, State}.
 
 
@@ -75,8 +75,13 @@ handle_call(_Msg, _From, State) ->
     {reply, ok, State}.
 
 
-handle_cast(next_tick, #state{cells=Cells, num_cells=NumCells, state_pairs=[]}=State) ->
-    ok = send_all(Cells, tick),
+handle_cast(next_tick,
+    #state{cells=Cells
+          ,num_cells=NumCells
+          ,state_pairs=[]
+          }=State) ->
+
+    ok = cast_all(Cells, tick),
     {noreply, State#state{replies_pending=NumCells}};
 
 handle_cast({tock, {ID, CellState}},
@@ -101,7 +106,7 @@ handle_cast({tock, {ID, CellState}},
             ok = do_print_state_chars(X, StateChars),
             ok = do_print_bar(X),
             ok = timer:sleep(?INTERVAL),
-            cast(next_tick),
+            schedule_next_tick(),
             {noreply, NewState#state{state_pairs=[], gen_count=NewGenCount}};
 
         _N ->
@@ -120,10 +125,14 @@ handle_info(_Msg, State) ->
 %% Internal
 %% ============================================================================
 
-send_all([], _) -> ok;
-send_all([PID | PIDs], Msg) ->
-    PID ! Msg,
-    send_all(PIDs, Msg).
+schedule_next_tick() ->
+    gen_server:cast(?MODULE, next_tick).
+
+
+cast_all([], _) -> ok;
+cast_all([Server | Servers], Msg) ->
+    ok = gen_server:cast(Server, Msg),
+    cast_all(Servers, Msg).
 
 
 state_to_char(0) -> ?CHAR_DEAD;

@@ -64,28 +64,21 @@ handle_call(_Msg, _From, State) ->
     {reply, ok, State}.
 
 
-handle_cast(_Msg, State) ->
-    {noreply, State}.
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-handle_info(tick,
+handle_cast(tick,
     #state{name=Name
           ,neighbors=Neighbors
           ,num_neighbors=NumNeighbors
           }=State) ->
-
-    ok = send_all(Neighbors, {request_state, Name}),
+    ok = cast_all(Neighbors, {request_state, Name}),
     {noreply, State#state{replies_pending=NumNeighbors}};
 
 
-handle_info({request_state, Requester}, State) ->
-    Requester ! {response_state, State#state.cell_state},
+handle_cast({request_state, Requester}, State) ->
+    ok = gen_server:cast(Requester, {response_state, State#state.cell_state}),
     {noreply, State};
 
 
-handle_info({response_state, NeighborState},
+handle_cast({response_state, NeighborState},
     #state{id=ID
           ,replies_pending=Pending
           ,cell_state=CellState
@@ -102,17 +95,20 @@ handle_info({response_state, NeighborState},
     case NewPending of
         0 ->
             NewCellState = new_state(CellState, NewLiveNeighbors),
-            ok = time:cast({tock, {ID, NewCellState}}),
+            ok = time:tock(ID, NewCellState),
 
             {noreply, NewState#state{live_neighbors=0
                                     ,cell_state=NewCellState
-                                    }};
+                                    }
+            };
 
         _N ->
             {noreply, NewState}
     end;
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+handle_cast(_Msg, State) ->
+    {noreply, State}.
 
 
 handle_info(_Msg, State) ->
@@ -123,10 +119,10 @@ handle_info(_Msg, State) ->
 %% Internal
 %% ============================================================================
 
-send_all([], _) -> ok;
-send_all([PID | PIDs], Msg) ->
-    PID ! Msg,
-    send_all(PIDs, Msg).
+cast_all([], _) -> ok;
+cast_all([Server | Servers], Msg) ->
+    ok = gen_server:cast(Server, Msg),
+    cast_all(Servers, Msg).
 
 
 new_state(1, LiveNeighbors) when LiveNeighbors  <  2 -> 0;
