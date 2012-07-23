@@ -89,6 +89,7 @@ handle_cast({tock, {ID, CellState}},
           ,state_pairs=StatePairs
           ,replies_pending=RepliesPending
           ,gen_count=GenCount
+          ,num_cells=NumCells
           }=State) ->
 
     NewStatePairs = [{ID, CellState} | StatePairs],
@@ -101,7 +102,10 @@ handle_cast({tock, {ID, CellState}},
             SortedStatePairs = lists:sort(NewStatePairs),
             StateChars = [state_to_char(S) || {_, S} <- SortedStatePairs],
             ok = do_print_bar(X),
-            ok = io:format("GENERATIONS: ~b~n", [NewGenCount]),
+            ok = io:format(
+                "CELLS: ~b GENERATIONS: ~b~n",
+                [NumCells, NewGenCount]
+            ),
             ok = do_print_bar(X),
             ok = do_print_state_chars(X, StateChars),
             ok = do_print_bar(X),
