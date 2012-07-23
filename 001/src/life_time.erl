@@ -1,4 +1,4 @@
--module(time).
+-module(life_time).
 -behaviour(gen_server).
 
 

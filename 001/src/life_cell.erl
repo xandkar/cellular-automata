@@ -1,4 +1,4 @@
--module(cell).
+-module(life_cell).
 -behaviour(gen_server).
 
 
@@ -95,7 +95,7 @@ handle_cast({response_state, NeighborState},
     case NewPending of
         0 ->
             NewCellState = new_state(CellState, NewLiveNeighbors),
-            ok = time:tock(ID, NewCellState),
+            ok = life_time:tock(ID, NewCellState),
 
             {noreply, NewState#state{live_neighbors=0
                                     ,cell_state=NewCellState
