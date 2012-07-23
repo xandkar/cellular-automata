@@ -5,5 +5,8 @@ Y=`expr \`stty size | awk '{print $1}'\` - 3`
 X=`stty size | awk '{print $2}'`
 
 
-erlc life.erl
-erl -noshell -s life bang $X $Y
+erl \
+    -noshell \
+    -pa ebin \
+    -life x $X y $Y \
+    -s life bang
