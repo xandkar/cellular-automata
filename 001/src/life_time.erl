@@ -17,11 +17,11 @@
         ]).
 
 
--define(INTERVAL, 100).  % In milliseconds
+-define(INTERVAL, 0).  % In milliseconds
 
 -define(CHAR_DEAD,   32).  % Space
 -define(CHAR_ALIVE, 111).  % o
--define(CHAR_BAR,    61).  % =
+-define(CHAR_BAR,    45).  % -
 
 
 -record(state, {x               :: integer()
@@ -101,14 +101,15 @@ handle_cast({tock, {ID, CellState}},
             NewGenCount = GenCount + 1,
             SortedStatePairs = lists:sort(NewStatePairs),
             StateChars = [state_to_char(S) || {_, S} <- SortedStatePairs],
-            ok = do_print_bar(X),
+
             ok = io:format(
                 "CELLS: ~b GENERATIONS: ~b~n",
                 [NumCells, NewGenCount]
             ),
             ok = do_print_bar(X),
+
             ok = do_print_state_chars(X, StateChars),
-            ok = do_print_bar(X),
+
             ok = timer:sleep(?INTERVAL),
             schedule_next_tick(),
             {noreply, NewState#state{state_pairs=[], gen_count=NewGenCount}};
