@@ -22,6 +22,7 @@
                ,live_neighbors  :: integer()
                ,num_neighbors   :: integer()
                ,replies_pending :: integer()
+               ,generation      :: integer()
                }).
 
 
@@ -64,13 +65,13 @@ handle_call(_Msg, _From, State) ->
     {reply, ok, State}.
 
 
-handle_cast(tick,
+handle_cast({tick, Generation},
     #state{name=Name
           ,neighbors=Neighbors
           ,num_neighbors=NumNeighbors
           }=State) ->
     ok = cast_all(Neighbors, {request_state, Name}),
-    {noreply, State#state{replies_pending=NumNeighbors}};
+    {noreply, State#state{replies_pending=NumNeighbors, generation=Generation}};
 
 
 handle_cast({request_state, Requester}, State) ->

@@ -30,7 +30,7 @@
                ,num_cells       :: integer()
                ,state_pairs     :: list(tuple(integer(), integer())) | []
                ,replies_pending :: integer()
-               ,gen_count = 0   :: integer()
+               ,generation = 0  :: integer()
                }).
 
 
@@ -81,17 +81,19 @@ handle_cast(next_tick,
     #state{cells=Cells
           ,num_cells=NumCells
           ,state_pairs=[]
+          ,generation=Generation
           }=State) ->
 
-    ok = cast_all(Cells, tick),
-    {noreply, State#state{replies_pending=NumCells}};
+    NewGeneration = Generation + 1,
+    ok = cast_all(Cells, {tick, NewGeneration}),
+    {noreply, State#state{replies_pending=NumCells, generation=NewGeneration}};
 
 handle_cast({tock, {ID, CellState}},
     #state{x=X
           ,y=Y
           ,state_pairs=StatePairs
           ,replies_pending=RepliesPending
-          ,gen_count=GenCount
+          ,generation=Generation
           ,num_cells=NumCells
           }=State) ->
 
@@ -101,7 +103,6 @@ handle_cast({tock, {ID, CellState}},
 
     case NewRepliesPending of
         0 ->
-            NewGenCount = GenCount + 1,
             SortedStatePairs = lists:sort(
                 fun({A, _}, {B, _}) -> A < B end,
                 NewStatePairs
@@ -109,8 +110,8 @@ handle_cast({tock, {ID, CellState}},
             StateChars = [state_to_char(S) || {_, S} <- SortedStatePairs],
 
             ok = io:format(
-                "X: ~b Y: ~b CELLS: ~b GENERATIONS: ~b~n",
-                [X, Y, NumCells, NewGenCount]
+                "X: ~b Y: ~b CELLS: ~b GENERATION: ~b~n",
+                [X, Y, NumCells, Generation]
             ),
             ok = do_print_bar(X),
 
@@ -118,7 +119,7 @@ handle_cast({tock, {ID, CellState}},
 
             ok = timer:sleep(?INTERVAL),
             schedule_next_tick(),
-            {noreply, NewState#state{state_pairs=[], gen_count=NewGenCount}};
+            {noreply, NewState#state{state_pairs=[]}};
 
         _N ->
             {noreply, NewState#state{state_pairs=NewStatePairs}}
