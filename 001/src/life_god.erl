@@ -27,7 +27,7 @@ start_link(X, CellData) ->
 
 init([X, CellData]) ->
     CellNames = [Name || {_, Name, _} <- CellData],
-    RestartStrategy = {one_for_one, 5, 10},
+    RestartStrategy = {one_for_one, 1000000, 1},
     Cells = [spec_cell(Datum) || Datum <- CellData],
     Time = ?CHILD(worker, life_time, [X, CellNames]),
     Children = Cells ++ [Time],
@@ -39,9 +39,3 @@ spec_cell({_, Name, _}=Datum) ->
     F = start_link,
     A = [Datum],
     {Name, {M, F, A}, permanent, 5000, worker, [M]}.
-
-    %{ID, {ID, start_link, Args}, permanent, 5000, Type, [ID]}.
-
-
-
-
