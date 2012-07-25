@@ -99,7 +99,10 @@ handle_cast({tock, {ID, CellState}},
     case NewRepliesPending of
         0 ->
             NewGenCount = GenCount + 1,
-            SortedStatePairs = lists:sort(NewStatePairs),
+            SortedStatePairs = lists:sort(
+                fun({A, _}, {B, _}) -> A < B end,
+                NewStatePairs
+            ),
             StateChars = [state_to_char(S) || {_, S} <- SortedStatePairs],
 
             ok = io:format(
