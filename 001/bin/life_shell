@@ -1,0 +1,6 @@
+#! /bin/sh
+
+
+erl \
+    -sname life_001_shell \
+    -remsh life_001@localhost
