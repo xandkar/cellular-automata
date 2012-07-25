@@ -17,7 +17,7 @@
         ]).
 
 
--define(INTERVAL, 0).  % In milliseconds
+-define(INTERVAL, 100).  % In milliseconds
 
 -define(CHAR_DEAD,   32).  % Space
 -define(CHAR_ALIVE, 111).  % o
