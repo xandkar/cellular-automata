@@ -3,7 +3,7 @@
 
 
 %% API
--export([start_link/2
+-export([start_link/3
         ,tock/2
         ]).
 
@@ -25,6 +25,7 @@
 
 
 -record(state, {x               :: integer()
+               ,y               :: integer()
                ,cells           :: list(atom())
                ,num_cells       :: integer()
                ,state_pairs     :: list(tuple(integer(), integer())) | []
@@ -37,9 +38,9 @@
 %% API
 %% ============================================================================
 
-start_link(X, Cells) ->
+start_link(X, Y, Cells) ->
     ServerName = {local, ?MODULE},
-    Args = [X, Cells],
+    Args = [X, Y, Cells],
     Opts = [],
     gen_server:start_link(ServerName, ?MODULE, Args, Opts).
 
@@ -52,8 +53,9 @@ tock(CellID, CellState) ->
 %% Callbacks
 %% ============================================================================
 
-init([X, Cells]) ->
+init([X, Y, Cells]) ->
     State = #state{x=X
+                  ,y=Y
                   ,cells=Cells
                   ,num_cells=length(Cells)
                   ,state_pairs=[]
@@ -86,6 +88,7 @@ handle_cast(next_tick,
 
 handle_cast({tock, {ID, CellState}},
     #state{x=X
+          ,y=Y
           ,state_pairs=StatePairs
           ,replies_pending=RepliesPending
           ,gen_count=GenCount
@@ -106,8 +109,8 @@ handle_cast({tock, {ID, CellState}},
             StateChars = [state_to_char(S) || {_, S} <- SortedStatePairs],
 
             ok = io:format(
-                "CELLS: ~b GENERATIONS: ~b~n",
-                [NumCells, NewGenCount]
+                "X: ~b Y: ~b CELLS: ~b GENERATIONS: ~b~n",
+                [X, Y, NumCells, NewGenCount]
             ),
             ok = do_print_bar(X),
 

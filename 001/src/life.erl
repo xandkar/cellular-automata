@@ -28,7 +28,7 @@ start(_StartType, _StartArgs) ->
     {ok, X} = application:get_env(?MODULE, x),
     {ok, Y} = application:get_env(?MODULE, y),
     CellData = cell_data(X, Y),
-    life_god:start_link(X, CellData).
+    life_god:start_link(X, Y, CellData).
 
 
 stop(_State) ->

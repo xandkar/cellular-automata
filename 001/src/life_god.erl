@@ -3,7 +3,7 @@
 
 
 %% API
--export([start_link/2]).
+-export([start_link/3]).
 
 %% Callbacks
 -export([init/1]).
@@ -17,19 +17,19 @@
 %% API
 %% ============================================================================
 
-start_link(X, CellData) ->
-    supervisor:start_link({local, ?MODULE}, ?MODULE, [X, CellData]).
+start_link(X, Y, CellData) ->
+    supervisor:start_link({local, ?MODULE}, ?MODULE, [X, Y, CellData]).
 
 
 %% ============================================================================
 %% Callbacks
 %% ============================================================================
 
-init([X, CellData]) ->
+init([X, Y, CellData]) ->
     CellNames = [Name || {_, Name, _} <- CellData],
     RestartStrategy = {one_for_one, 1000000, 1},
     Cells = [spec_cell(Datum) || Datum <- CellData],
-    Time = ?CHILD(worker, life_time, [X, CellNames]),
+    Time = ?CHILD(worker, life_time, [X, Y, CellNames]),
     Children = Cells ++ [Time],
     {ok, {RestartStrategy, Children}}.
 
