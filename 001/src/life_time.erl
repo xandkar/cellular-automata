@@ -4,7 +4,7 @@
 
 %% API
 -export([start_link/3
-        ,tock/2
+        ,report_state/2
         ]).
 
 %% Callbacks
@@ -30,7 +30,7 @@
                ,num_cells       :: integer()
                ,state_pairs     :: list(tuple(integer(), integer())) | []
                ,replies_pending :: integer()
-               ,generation = 0  :: integer()
+               ,gen_id          :: integer()
                }).
 
 
@@ -45,8 +45,8 @@ start_link(X, Y, Cells) ->
     gen_server:start_link(ServerName, ?MODULE, Args, Opts).
 
 
-tock(CellID, CellState) ->
-    gen_server:cast(?MODULE, {tock, {CellID, CellState}}).
+report_state(CellID, CellState) ->
+    gen_server:cast(?MODULE, {report_state, {CellID, CellState}}).
 
 
 %% ============================================================================
@@ -54,14 +54,15 @@ tock(CellID, CellState) ->
 %% ============================================================================
 
 init([X, Y, Cells]) ->
-    State = #state{x=X
-                  ,y=Y
-                  ,cells=Cells
-                  ,num_cells=length(Cells)
-                  ,state_pairs=[]
-                  ,replies_pending=0
+    State = #state{x               = X
+                  ,y               = Y
+                  ,cells           = Cells
+                  ,num_cells       = length(Cells)
+                  ,state_pairs     = []
+                  ,replies_pending = 0
+                  ,gen_id          = 0
                   },
-    schedule_next_tick(),
+    schedule_next_gen(),
     {ok, State}.
 
 
@@ -77,23 +78,23 @@ handle_call(_Msg, _From, State) ->
     {reply, ok, State}.
 
 
-handle_cast(next_tick,
+handle_cast(next_gen,
     #state{cells=Cells
           ,num_cells=NumCells
           ,state_pairs=[]
-          ,generation=Generation
+          ,gen_id=GenID
           }=State) ->
 
-    NewGeneration = Generation + 1,
-    ok = cast_all(Cells, {tick, NewGeneration}),
-    {noreply, State#state{replies_pending=NumCells, generation=NewGeneration}};
+    NewGenID = GenID + 1,
+    ok = cast_all(Cells, {next_gen, NewGenID}),
+    {noreply, State#state{replies_pending=NumCells, gen_id=NewGenID}};
 
-handle_cast({tock, {ID, CellState}},
+handle_cast({report_state, {ID, CellState}},
     #state{x=X
           ,y=Y
           ,state_pairs=StatePairs
           ,replies_pending=RepliesPending
-          ,generation=Generation
+          ,gen_id=GenID
           ,num_cells=NumCells
           }=State) ->
 
@@ -111,14 +112,14 @@ handle_cast({tock, {ID, CellState}},
 
             ok = io:format(
                 "X: ~b Y: ~b CELLS: ~b GENERATION: ~b~n",
-                [X, Y, NumCells, Generation]
+                [X, Y, NumCells, GenID]
             ),
             ok = do_print_bar(X),
 
             ok = do_print_state_chars(X, StateChars),
 
             ok = timer:sleep(?INTERVAL),
-            schedule_next_tick(),
+            schedule_next_gen(),
             {noreply, NewState#state{state_pairs=[]}};
 
         _N ->
@@ -137,8 +138,8 @@ handle_info(_Msg, State) ->
 %% Internal
 %% ============================================================================
 
-schedule_next_tick() ->
-    gen_server:cast(?MODULE, next_tick).
+schedule_next_gen() ->
+    gen_server:cast(?MODULE, next_gen).
 
 
 cast_all([], _) -> ok;

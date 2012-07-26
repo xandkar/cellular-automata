@@ -22,7 +22,7 @@
                ,live_neighbors  :: integer()
                ,num_neighbors   :: integer()
                ,replies_pending :: integer()
-               ,generation      :: integer()
+               ,gen_id          :: integer()
                }).
 
 
@@ -42,13 +42,13 @@ start_link({_ID, Name, _NeighborNames}=Datum) ->
 %% ============================================================================
 
 init([{ID, Name, NeighborNames}]) ->
-    State = #state{id=ID
-                  ,name=Name
-                  ,cell_state=crypto:rand_uniform(0, 2)
-                  ,neighbors=NeighborNames
-                  ,num_neighbors=length(NeighborNames)
-                  ,live_neighbors=0
-                  ,replies_pending=0
+    State = #state{id              = ID
+                  ,name            = Name
+                  ,cell_state      = crypto:rand_uniform(0, 2)
+                  ,neighbors       = NeighborNames
+                  ,num_neighbors   = length(NeighborNames)
+                  ,live_neighbors  = 0
+                  ,replies_pending = 0
                   },
     {ok, State}.
 
@@ -65,13 +65,13 @@ handle_call(_Msg, _From, State) ->
     {reply, ok, State}.
 
 
-handle_cast({tick, Generation},
+handle_cast({next_gen, GenID},
     #state{name=Name
           ,neighbors=Neighbors
           ,num_neighbors=NumNeighbors
           }=State) ->
     ok = cast_all(Neighbors, {request_state, Name}),
-    {noreply, State#state{replies_pending=NumNeighbors, generation=Generation}};
+    {noreply, State#state{replies_pending=NumNeighbors, gen_id=GenID}};
 
 
 handle_cast({request_state, Requester}, State) ->
@@ -96,7 +96,7 @@ handle_cast({response_state, NeighborState},
     case NewPending of
         0 ->
             NewCellState = new_state(CellState, NewLiveNeighbors),
-            ok = life_time:tock(ID, NewCellState),
+            ok = life_time:report_state(ID, NewCellState),
 
             {noreply, NewState#state{live_neighbors=0
                                     ,cell_state=NewCellState
