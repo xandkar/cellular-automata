@@ -62,7 +62,7 @@ init([X, Y, Cells]) ->
                   ,replies_pending = 0
                   ,gen_id          = 0
                   },
-    schedule_next_gen(),
+    ok = schedule_next_gen(),
     {ok, State}.
 
 
@@ -117,7 +117,7 @@ handle_cast({report_state, {CellID, GenID, CellState}},
             ok = do_print_bar(X),
             ok = do_print_state_chars(X, StateChars),
             ok = timer:sleep(?INTERVAL),
-            schedule_next_gen(),
+            ok = schedule_next_gen(),
             {noreply, NewState#state{state_pairs=[]}};
 
         _N ->
@@ -137,7 +137,7 @@ handle_info(_Msg, State) ->
 %% ============================================================================
 
 schedule_next_gen() ->
-    gen_server:cast(?MODULE, next_gen).
+    ok = gen_server:cast(?MODULE, next_gen).
 
 
 cast_all([], _) -> ok;

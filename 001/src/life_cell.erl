@@ -80,7 +80,7 @@ handle_cast({next_gen, GenID},
 %% possible. The more there're cells, the more likely this is to happen.)
 handle_cast({state_broadcast, ReceivedGenID, _NeighborState}=Msg,
     #state{gen_id=GenID, name=Name}=State) when GenID =/= ReceivedGenID->
-    gen_server:cast(Name, Msg),
+    ok = gen_server:cast(Name, Msg),
     {noreply, State};
 
 
