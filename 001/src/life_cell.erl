@@ -66,36 +66,27 @@ handle_call(_Msg, _From, State) ->
 
 
 handle_cast({next_gen, GenID},
-    #state{name=Name
+    #state{cell_state=CellState
           ,neighbors=Neighbors
           ,num_neighbors=NumNeighbors
           }=State) ->
 
-    ok = cast_all(Neighbors, {request_state, GenID, Name}),
+    ok = cast_all(Neighbors, {state_broadcast, GenID, CellState}),
     {noreply, State#state{replies_pending=NumNeighbors, gen_id=GenID}};
 
-%% If we receive this before we receive next_gen, throw it back in the queue.
-%% (Took me a while to realize this, but sometimes it is possible. The more
-%% there're cells, the more likely this is to happen.)
-handle_cast({request_state, GenID, _Requester}=Msg,
-    #state{gen_id=MyGenID
-          ,name=Name
-          }=State) when GenID =/= MyGenID->
 
+%% If we receive 'state_broadcast' before we receive 'next_gen', throw it back
+%% in the queue. (Took me a while to realize this, but sometimes it is
+%% possible. The more there're cells, the more likely this is to happen.)
+handle_cast({state_broadcast, ReceivedGenID, _NeighborState}=Msg,
+    #state{gen_id=GenID, name=Name}=State) when GenID =/= ReceivedGenID->
     gen_server:cast(Name, Msg),
     {noreply, State};
 
+
 %% Now that we can be sure that this request is for the current generation, we
 %% can handle it
-handle_cast({request_state, GenID, Requester},
-    #state{gen_id=MyGenID
-          ,cell_state=CellState
-          }=State) when GenID =:= MyGenID->
-
-    ok = gen_server:cast(Requester, {response_state, MyGenID, CellState}),
-    {noreply, State};
-
-handle_cast({response_state, GenID, NeighborState},
+handle_cast({state_broadcast, GenID, NeighborState},
     #state{cell_id=CellID
           ,gen_id=GenID
           ,replies_pending=Pending
@@ -123,6 +114,7 @@ handle_cast({response_state, GenID, NeighborState},
         _N ->
             {noreply, NewState}
     end;
+
 
 handle_cast(_Msg, State) ->
     {noreply, State}.
