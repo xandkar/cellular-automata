@@ -4,7 +4,7 @@
 
 %% API
 -export([start_link/3
-        ,report_state/2
+        ,report_state/3
         ]).
 
 %% Callbacks
@@ -45,8 +45,8 @@ start_link(X, Y, Cells) ->
     gen_server:start_link(ServerName, ?MODULE, Args, Opts).
 
 
-report_state(CellID, CellState) ->
-    gen_server:cast(?MODULE, {report_state, {CellID, CellState}}).
+report_state(CellID, GenID, CellState) ->
+    gen_server:cast(?MODULE, {report_state, {CellID, GenID, CellState}}).
 
 
 %% ============================================================================
@@ -89,7 +89,7 @@ handle_cast(next_gen,
     ok = cast_all(Cells, {next_gen, NewGenID}),
     {noreply, State#state{replies_pending=NumCells, gen_id=NewGenID}};
 
-handle_cast({report_state, {ID, CellState}},
+handle_cast({report_state, {CellID, GenID, CellState}},
     #state{x=X
           ,y=Y
           ,state_pairs=StatePairs
@@ -98,7 +98,7 @@ handle_cast({report_state, {ID, CellState}},
           ,num_cells=NumCells
           }=State) ->
 
-    NewStatePairs = [{ID, CellState} | StatePairs],
+    NewStatePairs = [{CellID, CellState} | StatePairs],
     NewRepliesPending = RepliesPending - 1,
     NewState = State#state{replies_pending=NewRepliesPending},
 
@@ -115,9 +115,7 @@ handle_cast({report_state, {ID, CellState}},
                 [X, Y, NumCells, GenID]
             ),
             ok = do_print_bar(X),
-
             ok = do_print_state_chars(X, StateChars),
-
             ok = timer:sleep(?INTERVAL),
             schedule_next_gen(),
             {noreply, NewState#state{state_pairs=[]}};

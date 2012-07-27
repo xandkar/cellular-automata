@@ -15,7 +15,7 @@
         ]).
 
 
--record(state, {id              :: integer()
+-record(state, {cell_id         :: integer()
                ,name            :: string()
                ,cell_state      :: 0 | 1
                ,neighbors       :: list(atom())
@@ -30,7 +30,7 @@
 %% API
 %% ============================================================================
 
-start_link({_ID, Name, _NeighborNames}=Datum) ->
+start_link({_, Name, _}=Datum) ->
     ServerName = {local, Name},
     Args = [Datum],
     Opts = [],
@@ -41,8 +41,8 @@ start_link({_ID, Name, _NeighborNames}=Datum) ->
 %% Callbacks
 %% ============================================================================
 
-init([{ID, Name, NeighborNames}]) ->
-    State = #state{id              = ID
+init([{CellID, Name, NeighborNames}]) ->
+    State = #state{cell_id         = CellID
                   ,name            = Name
                   ,cell_state      = crypto:rand_uniform(0, 2)
                   ,neighbors       = NeighborNames
@@ -70,17 +70,34 @@ handle_cast({next_gen, GenID},
           ,neighbors=Neighbors
           ,num_neighbors=NumNeighbors
           }=State) ->
-    ok = cast_all(Neighbors, {request_state, Name}),
+
+    ok = cast_all(Neighbors, {request_state, GenID, Name}),
     {noreply, State#state{replies_pending=NumNeighbors, gen_id=GenID}};
 
+%% If we receive this before we receive next_gen, throw it back in the queue.
+%% (Took me a while to realize this, but sometimes it is possible. The more
+%% there're cells, the more likely this is to happen.)
+handle_cast({request_state, GenID, _Requester}=Msg,
+    #state{gen_id=MyGenID
+          ,name=Name
+          }=State) when GenID =/= MyGenID->
 
-handle_cast({request_state, Requester}, State) ->
-    ok = gen_server:cast(Requester, {response_state, State#state.cell_state}),
+    gen_server:cast(Name, Msg),
     {noreply, State};
 
+%% Now that we can be sure that this request is for the current generation, we
+%% can handle it
+handle_cast({request_state, GenID, Requester},
+    #state{gen_id=MyGenID
+          ,cell_state=CellState
+          }=State) when GenID =:= MyGenID->
 
-handle_cast({response_state, NeighborState},
-    #state{id=ID
+    ok = gen_server:cast(Requester, {response_state, MyGenID, CellState}),
+    {noreply, State};
+
+handle_cast({response_state, GenID, NeighborState},
+    #state{cell_id=CellID
+          ,gen_id=GenID
           ,replies_pending=Pending
           ,cell_state=CellState
           ,live_neighbors=LiveNeighbors
@@ -96,7 +113,7 @@ handle_cast({response_state, NeighborState},
     case NewPending of
         0 ->
             NewCellState = new_state(CellState, NewLiveNeighbors),
-            ok = life_time:report_state(ID, NewCellState),
+            ok = life_time:report_state(CellID, GenID, NewCellState),
 
             {noreply, NewState#state{live_neighbors=0
                                     ,cell_state=NewCellState
@@ -106,7 +123,6 @@ handle_cast({response_state, NeighborState},
         _N ->
             {noreply, NewState}
     end;
-
 
 handle_cast(_Msg, State) ->
     {noreply, State}.
