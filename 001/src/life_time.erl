@@ -28,6 +28,8 @@
                ,y               :: integer()
                ,cells           :: list(atom())
                ,num_cells       :: integer()
+               ,num_dead        :: integer()
+               ,num_alive       :: integer()
                ,state_pairs     :: list(tuple(integer(), integer())) | []
                ,replies_pending :: integer()
                ,gen_id          :: integer()
@@ -87,11 +89,18 @@ handle_cast(next_gen,
 
     NewGenID = GenID + 1,
     ok = cast_all(Cells, {next_gen, NewGenID}),
-    {noreply, State#state{replies_pending=NumCells, gen_id=NewGenID}};
+    NewState = State#state{replies_pending=NumCells
+                          ,gen_id=NewGenID
+                          ,num_dead=0
+                          ,num_alive=0
+                          },
+    {noreply, NewState};
 
 handle_cast({report_state, {CellID, GenID, CellState}},
     #state{x=X
           ,y=Y
+          ,num_dead=NDead
+          ,num_alive=NAlive
           ,state_pairs=StatePairs
           ,replies_pending=RepliesPending
           ,gen_id=GenID
@@ -100,7 +109,11 @@ handle_cast({report_state, {CellID, GenID, CellState}},
 
     NewStatePairs = [{CellID, CellState} | StatePairs],
     NewRepliesPending = RepliesPending - 1,
-    NewState = State#state{replies_pending=NewRepliesPending},
+    {NewNDead, NewNAlive} = increment_dead_or_alive(CellState, NDead, NAlive),
+    NewState = State#state{replies_pending=NewRepliesPending
+                          ,num_dead=NewNDead
+                          ,num_alive=NewNAlive
+                          },
 
     case NewRepliesPending of
         0 ->
@@ -111,8 +124,8 @@ handle_cast({report_state, {CellID, GenID, CellState}},
             StateChars = [state_to_char(S) || {_, S} <- SortedStatePairs],
 
             ok = io:format(
-                "X: ~b Y: ~b CELLS: ~b GENERATION: ~b~n",
-                [X, Y, NumCells, GenID]
+                "X: ~b Y: ~b CELLS: ~b DEAD: ~b ALIVE: ~b GENERATION: ~b~n",
+                [X, Y, NumCells, NewNDead, NewNAlive, GenID]
             ),
             ok = do_print_bar(X),
             ok = do_print_state_chars(X, StateChars),
@@ -135,6 +148,10 @@ handle_info(_Msg, State) ->
 %% ============================================================================
 %% Internal
 %% ============================================================================
+
+increment_dead_or_alive(0, NDead, NAlive) -> {NDead + 1, NAlive};
+increment_dead_or_alive(1, NDead, NAlive) -> {NDead, NAlive + 1}.
+
 
 schedule_next_gen() ->
     ok = gen_server:cast(?MODULE, next_gen).
