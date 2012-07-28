@@ -75,11 +75,11 @@ handle_cast({next_gen, GenID},
           ,early_msgs=EarlyMsgs
           }=State) ->
 
-    ok = cast_all(Neighbors, {state_broadcast, GenID, CellState}),
+    ok = cast_one2all(Neighbors, {state_broadcast, GenID, CellState}),
 
     % Put stashed messages back in the mailbox,
     % now that we're ready to handle them
-    ok = cast_to(Name, EarlyMsgs),
+    ok = cast_all2one(Name, EarlyMsgs),
 
     NewState = State#state{replies_pending=NumNeighbors
                           ,gen_id=GenID
@@ -147,18 +147,18 @@ handle_info(_Msg, State) ->
 %% Internal
 %% ============================================================================
 
-% Cast different messages to a single destination
-cast_to(_, []) -> ok;
-cast_to(Server, [Msg | Msgs]) ->
+% Cast all messages to one destination
+cast_all2one(_, []) -> ok;
+cast_all2one(Server, [Msg | Msgs]) ->
     ok = gen_server:cast(Server, Msg),
-    cast_to(Server, Msgs).
+    cast_all2one(Server, Msgs).
 
 
-% Cast the same message to multiple destinations
-cast_all([], _) -> ok;
-cast_all([Server | Servers], Msg) ->
+% Cast one message to all destinations
+cast_one2all([], _) -> ok;
+cast_one2all([Server | Servers], Msg) ->
     ok = gen_server:cast(Server, Msg),
-    cast_all(Servers, Msg).
+    cast_one2all(Servers, Msg).
 
 
 new_state(1, LiveNeighbors) when LiveNeighbors  <  2 -> 0;
