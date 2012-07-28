@@ -86,7 +86,7 @@ handle_cast(next_gen,
           }=State) ->
 
     NewGenID = GenID + 1,
-    ok = cast_all(Cells, {next_gen, NewGenID}),
+    ok = life_lib:cast_one2all(Cells, {next_gen, NewGenID}),
     NewState = State#state{replies_pending=NumCells
                           ,gen_id=NewGenID
                           ,num_dead=0
@@ -149,12 +149,6 @@ increment_dead_or_alive(1, NDead, NAlive) -> {NDead, NAlive + 1}.
 
 schedule_next_gen() ->
     ok = gen_server:cast(?MODULE, next_gen).
-
-
-cast_all([], _) -> ok;
-cast_all([Server | Servers], Msg) ->
-    ok = gen_server:cast(Server, Msg),
-    cast_all(Servers, Msg).
 
 
 state_to_char(0) -> ?CHAR_DEAD;
