@@ -23,6 +23,7 @@
                ,num_neighbors   :: integer()
                ,replies_pending :: integer()
                ,gen_id          :: integer()
+               ,early_msgs      :: list()
                }).
 
 
@@ -49,6 +50,7 @@ init([{CellID, Name, NeighborNames}]) ->
                   ,num_neighbors   = length(NeighborNames)
                   ,live_neighbors  = 0
                   ,replies_pending = 0
+                  ,early_msgs      = []
                   },
     {ok, State}.
 
@@ -66,22 +68,39 @@ handle_call(_Msg, _From, State) ->
 
 
 handle_cast({next_gen, GenID},
-    #state{cell_state=CellState
+    #state{name=Name
+          ,cell_state=CellState
           ,neighbors=Neighbors
           ,num_neighbors=NumNeighbors
+          ,early_msgs=EarlyMsgs
           }=State) ->
 
     ok = cast_all(Neighbors, {state_broadcast, GenID, CellState}),
-    {noreply, State#state{replies_pending=NumNeighbors, gen_id=GenID}};
+
+    % Put stashed messages back in the mailbox,
+    % now that we're ready to handle them
+    ok = cast_to(Name, EarlyMsgs),
+
+    NewState = State#state{replies_pending=NumNeighbors
+                          ,gen_id=GenID
+                          ,early_msgs=[]
+                          },
+
+    {noreply, NewState};
 
 
-%% If we receive 'state_broadcast' before we receive 'next_gen', throw it back
-%% in the queue. (Took me a while to realize this, but sometimes it is
-%% possible. The more there're cells, the more likely this is to happen.)
+%% If we receive 'state_broadcast' before we receive 'next_gen',
+%% stash it until we do.
+%%
+%% Took me a while to realize this, but sometimes it is possible. The more
+%% there're cells, the more likely this is to happen.
+%%
 handle_cast({state_broadcast, ReceivedGenID, _NeighborState}=Msg,
-    #state{gen_id=GenID, name=Name}=State) when GenID =/= ReceivedGenID->
-    ok = gen_server:cast(Name, Msg),
-    {noreply, State};
+    #state{gen_id=GenID
+          ,early_msgs=EarlyMsgs
+          }=State) when GenID =/= ReceivedGenID ->
+
+    {noreply, State#state{early_msgs=[Msg|EarlyMsgs]}};
 
 
 %% Now that we can be sure that this request is for the current generation, we
@@ -128,6 +147,14 @@ handle_info(_Msg, State) ->
 %% Internal
 %% ============================================================================
 
+% Cast different messages to a single destination
+cast_to(_, []) -> ok;
+cast_to(Server, [Msg | Msgs]) ->
+    ok = gen_server:cast(Server, Msg),
+    cast_to(Server, Msgs).
+
+
+% Cast the same message to multiple destinations
 cast_all([], _) -> ok;
 cast_all([Server | Servers], Msg) ->
     ok = gen_server:cast(Server, Msg),
