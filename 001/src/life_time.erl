@@ -52,6 +52,16 @@ report_state(CellID, GenID, CellState) ->
 
 
 %% ============================================================================
+%% Callbacks (unused)
+%% ============================================================================
+
+handle_call(_Msg, _From, State)  -> {reply, ok, State}.
+handle_info(_Msg, State)         -> {noreply, State}.
+code_change(_Old, State, _Other) -> {ok, State}.
+terminate(_Reason, State)        -> {ok, State}.
+
+
+%% ============================================================================
 %% Callbacks
 %% ============================================================================
 
@@ -66,18 +76,6 @@ init([X, Y, Cells]) ->
                   },
     ok = schedule_next_gen(),
     {ok, State}.
-
-
-terminate(_Reason, State) ->
-    {ok, State}.
-
-
-code_change(_Old, State, _Other) ->
-    {ok, State}.
-
-
-handle_call(_Msg, _From, State) ->
-    {reply, ok, State}.
 
 
 handle_cast(next_gen,
@@ -138,10 +136,6 @@ handle_cast({report_state, {CellID, GenID, CellState}},
     end;
 
 handle_cast(_Msg, State) ->
-    {noreply, State}.
-
-
-handle_info(_Msg, State) ->
     {noreply, State}.
 
 

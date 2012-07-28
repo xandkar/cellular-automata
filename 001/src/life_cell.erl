@@ -39,6 +39,16 @@ start_link({_, Name, _}=Datum) ->
 
 
 %% ============================================================================
+%% Callbacks (unused)
+%% ============================================================================
+
+handle_call(_Msg, _From, State)  -> {reply, ok, State}.
+handle_info(_Msg, State)         -> {noreply, State}.
+code_change(_Old, State, _Other) -> {ok, State}.
+terminate(_Reason, State)        -> {ok, State}.
+
+
+%% ============================================================================
 %% Callbacks
 %% ============================================================================
 
@@ -53,18 +63,6 @@ init([{CellID, Name, NeighborNames}]) ->
                   ,early_msgs      = []
                   },
     {ok, State}.
-
-
-terminate(_Reason, State) ->
-    {ok, State}.
-
-
-code_change(_Old, State, _Other) ->
-    {ok, State}.
-
-
-handle_call(_Msg, _From, State) ->
-    {reply, ok, State}.
 
 
 handle_cast({next_gen, GenID},
@@ -136,10 +134,6 @@ handle_cast({state_broadcast, GenID, NeighborState},
 
 
 handle_cast(_Msg, State) ->
-    {noreply, State}.
-
-
-handle_info(_Msg, State) ->
     {noreply, State}.
 
 
