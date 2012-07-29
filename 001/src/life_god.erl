@@ -28,9 +28,13 @@ start_link(X, Y, CellData) ->
 init([X, Y, CellData]) ->
     CellNames = [Name || {_, Name, _} <- CellData],
     RestartStrategy = {one_for_one, 1000000, 1},
+
+    Observer = ?CHILD(worker, life_observer, [X, Y]),
     Cells = [spec_cell(Datum) || Datum <- CellData],
     Time = ?CHILD(worker, life_time, [X, Y, CellNames]),
-    Children = Cells ++ [Time],
+
+    Children = [Observer | Cells ++ [Time]],
+
     {ok, {RestartStrategy, Children}}.
 
 

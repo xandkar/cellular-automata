@@ -121,6 +121,8 @@ handle_cast({report_state, {CellID, GenID, CellState}},
             ),
             StateChars = [state_to_char(S) || {_, S} <- SortedStatePairs],
 
+            ok = life_observer:log_generation(GenID, NewNDead, NewNAlive),
+
             ok = io:format(
                 "X: ~b Y: ~b CELLS: ~b DEAD: ~b ALIVE: ~b GENERATION: ~b~n",
                 [X, Y, NumCells, NewNDead, NewNAlive, GenID]
