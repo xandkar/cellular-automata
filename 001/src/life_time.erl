@@ -19,9 +19,9 @@
 
 -define(INTERVAL, 100).  % In milliseconds
 
--define(CHAR_DEAD,   32).  % Space
--define(CHAR_ALIVE, 111).  % o
--define(CHAR_BAR,    45).  % -
+-define(CHAR_DEAD,   32).  % " "
+-define(CHAR_ALIVE, 111).  % "o"
+-define(CHAR_BAR,    45).  % "-"
 
 
 -record(state, {x               :: integer()
