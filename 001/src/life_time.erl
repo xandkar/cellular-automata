@@ -56,7 +56,6 @@ report_state(CellID, GenID, CellState) ->
 %% ============================================================================
 
 handle_call(_Msg, _From, State)  -> {reply, ok, State}.
-handle_info(_Msg, State)         -> {noreply, State}.
 code_change(_Old, State, _Other) -> {ok, State}.
 terminate(_Reason, State)        -> {ok, State}.
 
@@ -78,7 +77,7 @@ init([X, Y, Cells]) ->
     {ok, State}.
 
 
-handle_cast(next_gen,
+handle_info(next_gen,
     #state{cells=Cells
           ,num_cells=NumCells
           ,state_pairs=[]
@@ -93,6 +92,10 @@ handle_cast(next_gen,
                           ,num_alive=0
                           },
     {noreply, NewState};
+
+handle_info(_Msg, State) ->
+    {noreply, State}.
+
 
 handle_cast({report_state, {CellID, GenID, CellState}},
     #state{x=X
@@ -129,7 +132,7 @@ handle_cast({report_state, {CellID, GenID, CellState}},
             ),
             ok = do_print_bar(X),
             ok = do_print_state_chars(X, StateChars),
-            ok = timer:sleep(?INTERVAL),
+
             ok = schedule_next_gen(),
             {noreply, NewState#state{state_pairs=[]}};
 
@@ -150,7 +153,8 @@ increment_dead_or_alive(1, NDead, NAlive) -> {NDead, NAlive + 1}.
 
 
 schedule_next_gen() ->
-    ok = gen_server:cast(?MODULE, next_gen).
+    erlang:send_after(?INTERVAL, self(), next_gen),
+    ok.
 
 
 state_to_char(0) -> ?CHAR_DEAD;
