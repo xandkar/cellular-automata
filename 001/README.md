@@ -32,4 +32,4 @@ Usage
 
 Doodles
 -------
-![Doodles](https://github.com/ibnfirnas/life/raw/master/001/doodles.png)
+![Doodles](https://github.com/ibnfirnas/life/raw/master/001/doodles.jpg)
