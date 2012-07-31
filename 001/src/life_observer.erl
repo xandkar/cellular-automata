@@ -7,7 +7,7 @@
         ,register_with_logger/0
         ,add_handler/2
         ,delete_handler/0
-        ,log_generation/3
+        ,log_generation/4
         ]).
 
 %% Callbacks
@@ -55,8 +55,8 @@ delete_handler() ->
     gen_event:delete_handler(?EVENT_MGR_REF, ?HANDLER, Args).
 
 
-log_generation(GenID, Dead, Alive) ->
-    Event = {generation, GenID, Dead, Alive},
+log_generation(GenID, GenDuration, Dead, Alive) ->
+    Event = {generation, GenID, GenDuration, Dead, Alive},
     gen_event:notify(?EVENT_MGR_REF, Event).
 
 
@@ -88,7 +88,7 @@ init([X, Y]) ->
     ok = validate_makedir(file:make_dir(?PATH_DIR__DATA)),
     {ok, LogFile} = file:open(FilePath, write),
 
-    CSVHeaders = ["Generation", "Dead", "Alive"],
+    CSVHeaders = ["Generation", "Duration", "Dead", "Alive"],
     ok = do_write(LogFile, list_to_csvline(CSVHeaders)),
 
     {ok, #state{log_file=LogFile}}.
@@ -99,10 +99,14 @@ terminate(_Reason, #state{log_file=LogFile}=State) ->
     {ok, State}.
 
 
-handle_event({generation, GenID, Dead, Alive},
+handle_event({generation, GenID, GenDuration, Dead, Alive},
     #state{log_file=LogFile}=State) ->
 
-    Values = [integer_to_list(I) || I <- [GenID, Dead, Alive]],
+    Values = [integer_to_list(GenID)
+             ,float_to_string(GenDuration)
+             ,integer_to_list(Dead)
+             ,integer_to_list(Alive)
+             ],
     ok = do_write(LogFile, list_to_csvline(Values)),
     {ok, State}.
 
@@ -122,3 +126,7 @@ do_write(File, Line) ->
 
 list_to_csvline(List) ->
     string:join(List, ?CSV_DELIMITER).
+
+
+float_to_string(Float) ->
+    io_lib:format("~f", [Float]).

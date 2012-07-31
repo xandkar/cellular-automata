@@ -33,6 +33,7 @@
                ,state_pairs     :: list(tuple(integer(), integer())) | []
                ,replies_pending :: integer()
                ,gen_id          :: integer()
+               ,gen_began       :: erlang:timestamp()
                }).
 
 
@@ -84,10 +85,12 @@ handle_info(next_gen,
           ,gen_id=GenID
           }=State) ->
 
+    GenBegan = os:timestamp(),
     NewGenID = GenID + 1,
     ok = life_lib:cast_one2all(Cells, {next_gen, NewGenID}),
     NewState = State#state{replies_pending=NumCells
                           ,gen_id=NewGenID
+                          ,gen_began=GenBegan
                           ,num_dead=0
                           ,num_alive=0
                           },
@@ -105,6 +108,7 @@ handle_cast({report_state, {CellID, GenID, CellState}},
           ,state_pairs=StatePairs
           ,replies_pending=RepliesPending
           ,gen_id=GenID
+          ,gen_began=GenBegan
           ,num_cells=NumCells
           }=State) ->
 
@@ -124,11 +128,13 @@ handle_cast({report_state, {CellID, GenID, CellState}},
             ),
             StateChars = [state_to_char(S) || {_, S} <- SortedStatePairs],
 
-            ok = life_observer:log_generation(GenID, NewNDead, NewNAlive),
+            GenDuration = timer:now_diff(os:timestamp(), GenBegan) / 1000000,
+
+            ok = life_observer:log_generation(GenID, GenDuration, NewNDead, NewNAlive),
 
             ok = io:format(
-                "X: ~b Y: ~b CELLS: ~b DEAD: ~b ALIVE: ~b GENERATION: ~b~n",
-                [X, Y, NumCells, NewNDead, NewNAlive, GenID]
+                "X: ~b Y: ~b CELLS: ~b DEAD: ~b ALIVE: ~b GENERATION: ~b DURATION: ~f~n",
+                [X, Y, NumCells, NewNDead, NewNAlive, GenID, GenDuration]
             ),
             ok = do_print_bar(X),
             ok = do_print_state_chars(X, StateChars),
