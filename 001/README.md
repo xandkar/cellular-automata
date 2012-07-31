@@ -26,8 +26,10 @@ simply log the statistics for each run of the simulation.
 
 Usage
 -----
-* Build `make`
-* Run `./bin/life`
+* Get: `git clone git://github.com/ibnfirnas/life.git`
+* Enter: `cd life/001`
+* Build: `make`
+* Run: `./bin/life`
 
 
 Doodles
