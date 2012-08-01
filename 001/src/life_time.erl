@@ -17,7 +17,7 @@
         ]).
 
 
--define(INTERVAL, 100).  % In milliseconds
+-define(GEN_INTERVAL, 100).  % In milliseconds
 
 -define(CHAR_DEAD,   32).  % " "
 -define(CHAR_ALIVE, 111).  % "o"
@@ -74,7 +74,8 @@ init([X, Y, Cells]) ->
                   ,replies_pending = 0
                   ,gen_id          = 0
                   },
-    ok = schedule_next_gen(),
+    NextGenDelay = 0,
+    ok = schedule_next_gen(NextGenDelay),
     {ok, State}.
 
 
@@ -128,18 +129,21 @@ handle_cast({report_state, {CellID, GenID, CellState}},
             ),
             StateChars = [state_to_char(S) || {_, S} <- SortedStatePairs],
 
-            GenDuration = timer:now_diff(os:timestamp(), GenBegan) / 1000000,
+            GenDurationMic = timer:now_diff(os:timestamp(), GenBegan),
+            GenDurationMil = GenDurationMic / 1000,
+            GenDurationSec = GenDurationMic / 1000000,
+            NextGenDelay = round(?GEN_INTERVAL - GenDurationMil),
 
-            ok = life_observer:log_generation(GenID, GenDuration, NewNDead, NewNAlive),
+            ok = life_observer:log_generation(GenID, GenDurationSec, NewNDead, NewNAlive),
 
             ok = io:format(
                 "X: ~b Y: ~b CELLS: ~b DEAD: ~b ALIVE: ~b GENERATION: ~b DURATION: ~f~n",
-                [X, Y, NumCells, NewNDead, NewNAlive, GenID, GenDuration]
+                [X, Y, NumCells, NewNDead, NewNAlive, GenID, GenDurationSec]
             ),
             ok = do_print_bar(X),
             ok = do_print_state_chars(X, StateChars),
 
-            ok = schedule_next_gen(),
+            ok = schedule_next_gen(NextGenDelay),
             {noreply, NewState#state{state_pairs=[]}};
 
         _N ->
@@ -158,8 +162,12 @@ increment_dead_or_alive(0, NDead, NAlive) -> {NDead + 1, NAlive};
 increment_dead_or_alive(1, NDead, NAlive) -> {NDead, NAlive + 1}.
 
 
-schedule_next_gen() ->
-    erlang:send_after(?INTERVAL, self(), next_gen),
+schedule_next_gen(Delay) when Delay > 0 ->
+    erlang:send_after(Delay, self(), next_gen),
+    ok;
+
+schedule_next_gen(_) ->
+    erlang:send(self(), next_gen),
     ok.
 
 
