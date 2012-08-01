@@ -6,6 +6,7 @@ X=`stty size | awk '{print $2}'`
 
 
 erl \
+    +P 100000000 \
     -name life_001@localhost \
     -noshell \
     -pa ebin \
