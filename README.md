@@ -15,4 +15,7 @@ Summary
 -------
 * __ID:__ 001,
   __Language:__ Erlang,
-  __Approach:__ each cell is a gen_server process
+  __Approach:__ Each cell is a gen_server process
+* __ID:__ 002,
+  __Language:__ OCaml,
+  __Approach:__ Traditional matrix
