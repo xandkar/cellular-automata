@@ -24,7 +24,7 @@ let minisleep subsec =
 
 
 let init_board x y =
-  Array.map (Array.map (fun _ -> Random.int 2)) (Array.make_matrix x y 0)
+  Array.map (Array.map (fun _ -> Random.int 2)) (Array.make_matrix y x 0)
 
 
 let print_board board =
@@ -79,10 +79,14 @@ let rec life_loop board =
   life_loop (new_generation board)
 
 
-let main x y =
+let main argv =
+  let x = int_of_string argv.(1)
+  and y = int_of_string argv.(2)
+  in
+
   Random.init (int_of_float (Unix.time ()));
 
   life_loop (init_board x y)
 
 
-let () = main 61 236
+let () = main Sys.argv
