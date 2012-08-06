@@ -6,6 +6,16 @@ let directions =
   [N; NE; E; SE; S; SW; W; NW]
 
 
+let char_dead  = ' '
+let char_alive = 'o'
+
+
+let char_of_state = function
+  | 0 -> char_dead
+  | 1 -> char_alive
+  | _ -> assert false
+
+
 let offset = function
   (* direction -> x, y *)
   | N  ->  0, -1
@@ -28,7 +38,14 @@ let init_board x y =
 
 
 let print_board board =
-  Array.iter (fun row -> Array.iter (print_int) row; print_newline ()) board
+  Array.iter
+  (fun row ->
+    Array.iter
+    (fun state -> print_char (char_of_state state))
+    row;
+    print_newline ()
+  )
+  board
 
 
 let new_state = function
