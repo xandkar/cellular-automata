@@ -1,6 +1,9 @@
 .eunit
+bin
 deps
 priv
 *.o
 *.beam
 *.plt
+*.cmi
+*.cmx
