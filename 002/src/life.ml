@@ -6,6 +6,9 @@ let directions =
   [N; NE; E; SE; S; SW; W; NW]
 
 
+let (|>) x f = f x
+
+
 let char_dead  = ' '
 let char_alive = 'o'
 
@@ -39,11 +42,12 @@ let init_board x y =
 
 let print_board board =
   Array.iter
-  (fun row ->
-    Array.iter
-    (fun state -> print_char (char_of_state state))
-    row;
-    print_newline ()
+  (
+    fun row ->
+      Array.iter
+      (fun state -> print_char (char_of_state state))
+      row;
+      print_newline ()
   )
   board
 
@@ -62,27 +66,29 @@ let filter_offsides width height neighbors =
   neighbors
 
 
+let neighbors x y =
+  List.map
+  (
+    fun d ->
+      let off_x, off_y = offset d in
+      (x + off_x), (y + off_y)
+  )
+  directions
+
+
 let new_generation board =
-  let height = Array.length board
-  and width = Array.length board.(0) in
+  let h = Array.length board
+  and w = Array.length board.(0) in
   Array.mapi
   (
-    fun i_y row ->
+    fun y row ->
       Array.mapi
-      (fun i_x state->
-        let neighbors =
-          List.map
-          (fun d ->
-            let off_x, off_y = offset d in
-            (i_x + off_x), (i_y + off_y)
-          )
-          directions
-        in
-        let neighbors = filter_offsides width height neighbors in
-        let states = List.map (fun (x, y) -> board.(y).(x)) neighbors in
-        let live_neighbors = List.fold_left (+) 0 states in
-        let state = new_state (state, live_neighbors) in
-        state
+      (
+        fun x state->
+          let neighbors = neighbors x y |> filter_offsides w h in
+          let states = List.map (fun (x, y) -> board.(y).(x)) neighbors in
+          let live_neighbors = List.fold_left (+) 0 states in
+          new_state (state, live_neighbors)
       )
       row
   )
