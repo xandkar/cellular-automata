@@ -1,0 +1,12 @@
+{application, life,
+ [
+  {description, "Conway's Game of Life."},
+  {vsn, "dev"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { life, []}},
+  {env, []}
+ ]}.
