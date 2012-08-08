@@ -15,17 +15,17 @@
 bang(Args) ->
     [X, Y] = [atom_to_integer(A) || A <- Args],
     Board = init_board(X, Y),
-    life_loop(Board).
+    life_loop(X, Y, Board).
 
 
 %% ============================================================================
 %% Internal
 %% ============================================================================
 
-life_loop(Board) ->
+life_loop(X, Y, Board) ->
     ok = do_print_board(Board),
     timer:sleep(?INTERVAL),
-    life_loop(next_generation(Board)).
+    life_loop(X, Y, next_generation(X, Y, Board)).
 
 
 do_print_board(Board) ->
@@ -57,10 +57,7 @@ state_to_char(0) -> ?CHAR_DEAD;
 state_to_char(1) -> ?CHAR_ALIVE.
 
 
-next_generation(Board) ->
-    H = array:size(Board),
-    W = array:size(array:get(0, Board)),
-
+next_generation(W, H, Board) ->
     array:map(
         fun(Y, Row) ->
             array:map(
