@@ -33,9 +33,9 @@ bang(Args) ->
                   ,n            = X * Y
                   ,bar          = [?CHAR_BAR || _ <- lists:seq(1, X)]
                   ,board        = Board
-                  ,gen_count    = 1
+                  ,gen_count    = 1  % Consider inital state to be generation 1
                   ,gen_duration = Time
-                  ,print_time   = 0
+                  ,print_time   = 0  % There was no print time yet
     },
     life_loop(State).
 
