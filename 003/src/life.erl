@@ -17,6 +17,7 @@
                ,board=array:new() :: array()
                ,gen_count         :: non_neg_integer()
                ,gen_duration      :: non_neg_integer()
+               ,print_time        :: non_neg_integer()
                }).
 
 
@@ -34,6 +35,7 @@ bang(Args) ->
                   ,board        = Board
                   ,gen_count    = 1
                   ,gen_duration = Time
+                  ,print_time   = 0
     },
     life_loop(State).
 
@@ -50,27 +52,38 @@ life_loop(
           ,board        = Board
           ,gen_count    = GenCount
           ,gen_duration = Time
+          ,print_time   = LastPrintTime
     }=State) ->
 
-    ok = do_print_status(Bar, X, Y, N, GenCount, Time),
-    ok = do_print_board(Board),
+    {PrintTime, ok} = timer:tc(
+        fun() ->
+            do_print_screen(Board, Bar, X, Y, N, GenCount, Time, LastPrintTime)
+        end
+    ),
 
     {NewTime, NewBoard} = timer:tc(fun() -> next_generation(X, Y, Board) end),
     NewState = State#state{board        = NewBoard
                           ,gen_count    = GenCount + 1
                           ,gen_duration = NewTime
+                          ,print_time   = PrintTime
     },
 
     timer:sleep(?INTERVAL),
     life_loop(NewState).
 
 
-do_print_status(Bar, X, Y, N, GenCount, TimeMic) ->
+do_print_screen(Board, Bar, X, Y, N, GenCount, Time, PrintTime) ->
+    ok = do_print_status(Bar, X, Y, N, GenCount, Time, PrintTime),
+    ok = do_print_board(Board).
+
+
+do_print_status(Bar, X, Y, N, GenCount, TimeMic, PrintTimeMic) ->
     TimeSec = TimeMic / 1000000,
+    PrintTimeSec = PrintTimeMic / 1000000,
     ok = io:format("~s~n", [Bar]),
     ok = io:format(
-        "X: ~b Y: ~b CELLS: ~b GENERATION: ~b DURATION: ~f~n",
-        [X, Y, N, GenCount, TimeSec]
+        "X: ~b Y: ~b CELLS: ~b GENERATION: ~b DURATION: ~f PRINT TIME: ~f~n",
+        [X, Y, N, GenCount, TimeSec, PrintTimeSec]
     ),
     ok = io:format("~s~n", [Bar]).
 
