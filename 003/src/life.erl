@@ -74,10 +74,14 @@ life_loop(
     },
 
     NewTimeMil = NewTime / 1000,
-    NextGenDelay = round(?GEN_INTERVAL - NewTimeMil),
+    NextGenDelay = at_least_zero(round(?GEN_INTERVAL - NewTimeMil)),
     timer:sleep(NextGenDelay),
 
     life_loop(NewState).
+
+
+at_least_zero(Integer) when Integer >= 0 -> Integer;
+at_least_zero(_) -> 0.
 
 
 do_print_screen(Board, Bar, X, Y, N, GenCount, Time, PrintTime) ->
