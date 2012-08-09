@@ -7,7 +7,7 @@
 -define(CHAR_ALIVE, 111).  % "o"
 -define(CHAR_BAR,    45).  % "-"
 
--define(INTERVAL, 100).
+-define(GEN_INTERVAL, 100).
 
 
 -record(state, {x            :: non_neg_integer()
@@ -73,7 +73,10 @@ life_loop(
                           ,print_time   = PrintTime
     },
 
-    timer:sleep(?INTERVAL),
+    NewTimeMil = NewTime / 1000,
+    NextGenDelay = round(?GEN_INTERVAL - NewTimeMil),
+    timer:sleep(NextGenDelay),
+
     life_loop(NewState).
 
 
