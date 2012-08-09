@@ -61,7 +61,12 @@ life_loop(
         end
     ),
 
-    {NewTime, NewBoard} = timer:tc(fun() -> next_generation(X, Y, Board) end),
+    {NewTime, NewBoard} = timer:tc(
+        fun() ->
+            next_generation(X, Y, Board)
+        end
+    ),
+
     NewState = State#state{board        = NewBoard
                           ,gen_count    = GenCount + 1
                           ,gen_duration = NewTime
