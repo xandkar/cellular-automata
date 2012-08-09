@@ -4,9 +4,14 @@
 Y=`expr \`stty size | awk '{print $1}'\` - 3`
 X=`stty size | awk '{print $2}'`
 
+NUM_BEAM_PROCESSES=31
+NUM_LIFE_CELLS=`expr $X \* $Y`
+NUM_LIFE_PROCESSES=`expr $NUM_LIFE_CELLS + 4`
+NUM_PROCESSES=`expr $NUM_BEAM_PROCESSES + $NUM_LIFE_PROCESSES`
+
 
 erl \
-    +P 100000000 \
+    +P $NUM_PROCESSES \
     -name life_001@localhost \
     -noshell \
     -pa ebin \

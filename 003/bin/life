@@ -6,7 +6,6 @@ X=`stty size | awk '{print $2}'`
 
 
 erl \
-    -name life_003@localhost \
     -noshell \
     -pa ebin \
     -s life bang $X $Y
