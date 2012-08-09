@@ -89,7 +89,7 @@ do_print_status(Bar, X, Y, N, GenCount, TimeMic, PrintTimeMic) ->
 
 
 do_print_board(Board) ->
-    CharLists = array:to_list(
+    RowStrings = array:to_list(
         array:map(
             fun(_, Row) ->
                 array:to_list(
@@ -106,10 +106,10 @@ do_print_board(Board) ->
     ),
 
     ok = lists:foreach(
-        fun(CharList) ->
-            ok = io:format("~s~n", [CharList])
+        fun(RowString) ->
+            ok = io:format("~s~n", [RowString])
         end,
-        CharLists
+        RowStrings
     ).
 
 
