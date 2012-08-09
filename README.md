@@ -19,3 +19,6 @@ Summary
 * __ID:__ 002,
   __Language:__ OCaml,
   __Approach:__ Traditional matrix
+* __ID:__ 003,
+  __Language:__ Erlang,
+  __Approach:__ Traditional matrix as nested array()
