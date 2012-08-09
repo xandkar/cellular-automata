@@ -94,6 +94,9 @@ do_print_status(Bar, X, Y, N, GenCount, TimeMic, PrintTimeMic) ->
 
 
 do_print_board(Board) ->
+    % It seems that just doing a fold should be faster than map + to_list
+    % combo, but, after measuring several times, map + to_list has been
+    % consistently (nearly twice) faster than either foldl or foldr.
     RowStrings = array:to_list(
         array:map(
             fun(_, Row) ->
