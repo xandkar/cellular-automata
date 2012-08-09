@@ -13,7 +13,7 @@
 -record(state, {x            :: non_neg_integer()
                ,y            :: non_neg_integer()
                ,n            :: pos_integer()
-               ,bar          :: string()
+               ,bar          :: nonempty_string()
                ,board        :: array()
                ,gen_count    :: pos_integer()
                ,gen_duration :: non_neg_integer()
