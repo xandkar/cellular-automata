@@ -5,6 +5,8 @@
 
 -define(CHAR_DEAD,   32).  % " "
 -define(CHAR_ALIVE, 111).  % "o"
+-define(CHAR_BAR,    45).  % "-"
+
 -define(INTERVAL, 100).
 
 
@@ -14,18 +16,34 @@
 
 bang(Args) ->
     [X, Y] = [atom_to_integer(A) || A <- Args],
-    Board = init_board(X, Y),
-    life_loop(X, Y, Board).
+    {Time, Board} = timer:tc(fun() -> init_board(X, Y) end),
+    Generation = 1,
+    life_loop(X, Y, Generation, Time, Board).
 
 
 %% ============================================================================
 %% Internal
 %% ============================================================================
 
-life_loop(X, Y, Board) ->
+life_loop(X, Y, Generation, Time, Board) ->
+    ok = do_print_status(X, Y, Generation, Time),
     ok = do_print_board(Board),
+
+    {NextTime, NextBoard} = timer:tc(fun() -> next_generation(X, Y, Board) end),
+    NextGeneration = Generation + 1,
     timer:sleep(?INTERVAL),
-    life_loop(X, Y, next_generation(X, Y, Board)).
+    life_loop(X, Y, NextGeneration, NextTime, NextBoard).
+
+
+do_print_status(X, Y, Generation, TimeMic) ->
+    TimeSec = TimeMic / 1000000,
+    Bar = [?CHAR_BAR || _ <- lists:seq(1, X)],
+    ok = io:format("~s~n", [Bar]),
+    ok = io:format(
+        "X: ~b Y: ~b CELLS: ~b GENERATION: ~b DURATION: ~f~n",
+        [X, Y, X * Y, Generation, TimeSec]
+    ),
+    ok = io:format("~s~n", [Bar]).
 
 
 do_print_board(Board) ->
