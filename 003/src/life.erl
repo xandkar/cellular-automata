@@ -14,7 +14,7 @@
                ,y                 :: non_neg_integer()
                ,n                 :: non_neg_integer()
                ,bar               :: string()
-               ,board=array:new() :: array()
+               ,board             :: array()
                ,gen_count         :: non_neg_integer()
                ,gen_duration      :: non_neg_integer()
                ,print_time        :: non_neg_integer()
