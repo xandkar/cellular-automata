@@ -21,4 +21,7 @@ Summary
   __Approach:__ Traditional matrix
 * __ID:__ 003,
   __Language:__ Erlang,
-  __Approach:__ Traditional matrix as nested array()
+  __Approach:__ Traditional matrix as nested [array()]
+
+
+[array()]: http://www.erlang.org/doc/man/array.html "Which is not actually an array, but an integer-keyed tree."
