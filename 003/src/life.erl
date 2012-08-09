@@ -10,6 +10,16 @@
 -define(INTERVAL, 100).
 
 
+-record(state, {x                 :: non_neg_integer()
+               ,y                 :: non_neg_integer()
+               ,n                 :: non_neg_integer()
+               ,bar               :: string()
+               ,board=array:new() :: array()
+               ,gen_count         :: non_neg_integer()
+               ,gen_duration      :: non_neg_integer()
+               }).
+
+
 %% ============================================================================
 %% API
 %% ============================================================================
@@ -17,31 +27,50 @@
 bang(Args) ->
     [X, Y] = [atom_to_integer(A) || A <- Args],
     {Time, Board} = timer:tc(fun() -> init_board(X, Y) end),
-    Generation = 1,
-    life_loop(X, Y, Generation, Time, Board).
+    State = #state{x            = X
+                  ,y            = Y
+                  ,n            = X * Y
+                  ,bar          = [?CHAR_BAR || _ <- lists:seq(1, X)]
+                  ,board        = Board
+                  ,gen_count    = 1
+                  ,gen_duration = Time
+    },
+    life_loop(State).
 
 
 %% ============================================================================
 %% Internal
 %% ============================================================================
 
-life_loop(X, Y, Generation, Time, Board) ->
-    ok = do_print_status(X, Y, Generation, Time),
+life_loop(
+    #state{x            = X
+          ,y            = Y
+          ,n            = N
+          ,bar          = Bar
+          ,board        = Board
+          ,gen_count    = GenCount
+          ,gen_duration = Time
+    }=State) ->
+
+    ok = do_print_status(Bar, X, Y, N, GenCount, Time),
     ok = do_print_board(Board),
 
-    {NextTime, NextBoard} = timer:tc(fun() -> next_generation(X, Y, Board) end),
-    NextGeneration = Generation + 1,
+    {NewTime, NewBoard} = timer:tc(fun() -> next_generation(X, Y, Board) end),
+    NewState = State#state{board        = NewBoard
+                          ,gen_count    = GenCount + 1
+                          ,gen_duration = NewTime
+    },
+
     timer:sleep(?INTERVAL),
-    life_loop(X, Y, NextGeneration, NextTime, NextBoard).
+    life_loop(NewState).
 
 
-do_print_status(X, Y, Generation, TimeMic) ->
+do_print_status(Bar, X, Y, N, GenCount, TimeMic) ->
     TimeSec = TimeMic / 1000000,
-    Bar = [?CHAR_BAR || _ <- lists:seq(1, X)],
     ok = io:format("~s~n", [Bar]),
     ok = io:format(
         "X: ~b Y: ~b CELLS: ~b GENERATION: ~b DURATION: ~f~n",
-        [X, Y, X * Y, Generation, TimeSec]
+        [X, Y, N, GenCount, TimeSec]
     ),
     ok = io:format("~s~n", [Bar]).
 
