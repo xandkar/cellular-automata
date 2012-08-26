@@ -22,6 +22,9 @@ Summary
 * __ID:__ 003,
   __Language:__ Erlang,
   __Approach:__ Traditional matrix as nested [array()]
+* __ID:__ 004,
+  __Language:__ AWK,
+  __Approach:__ Board as string
 
 
 [array()]: http://www.erlang.org/doc/man/array.html "Which is not actually an array, but an integer-keyed tree."
