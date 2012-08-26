@@ -69,24 +69,15 @@ function new_state(state, live_neighbors) {
 }
 
 
-function ensure_negative(n) {
-    if (n < 0) {
-        return n
-    } else {
-        return -n
-    }
-}
-
-
 function new_generation(x, n, board) {
-    offsets["N" ] = ensure_negative(x    );
-    offsets["NE"] = ensure_negative(x - 1);
-    offsets["E" ] =                     1 ;
-    offsets["SE"] =                 x + 1 ;
-    offsets["S" ] =                 x     ;
-    offsets["SW"] =                 x - 1 ;
-    offsets["W" ] =                   - 1 ;
-    offsets["NW"] = ensure_negative(x + 1);
+    offsets["N" ] =  - x     ;
+    offsets["NE"] =  -(x - 1);
+    offsets["E" ] =        1 ;
+    offsets["SE"] =    x + 1 ;
+    offsets["S" ] =    x     ;
+    offsets["SW"] =    x - 1 ;
+    offsets["W" ] =      - 1 ;
+    offsets["NW"] =  -(x + 1);
 
     new_board = "";
 
