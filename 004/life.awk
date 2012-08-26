@@ -6,23 +6,23 @@ function CHAR_ALIVE()  {return "o"}
 function CHAR_DEAD()   {return " "}
 
 
-function init_cell() {
+function get_init_cell() {
     return int(2 * rand())
 }
 
 
-function init_board(n) {
+function get_init_board(n) {
     board = "";
 
     for (i=1; i <= n; i++) {
-        board = sprintf("%s%d", board, init_cell())
+        board = sprintf("%s%d", board, get_init_cell())
     };
 
     return board
 }
 
 
-function print_border(x) {
+function do_print_border(x) {
     for (i=1; i <= x; i++) {
         printf CHAR_BORDER()
     };
@@ -30,7 +30,7 @@ function print_border(x) {
 }
 
 
-function char_of_state(state) {
+function get_char_of_state(state) {
     if (state == 1) {
         return CHAR_ALIVE()
     } else if (state == 0) {
@@ -39,22 +39,22 @@ function char_of_state(state) {
 }
 
 
-function print_board(x, n, board) {
-    print_border(x);
+function do_print_board(x, n, board) {
+    do_print_border(x);
 
     for (i=1; i <= n; i++) {
-        printf "%s", char_of_state(substr(board, i, 1));
+        printf "%s", get_char_of_state(substr(board, i, 1));
 
         if (i % x == 0) {
             printf "\n"
         }
     };
 
-    print_border(x);
+    do_print_border(x);
 }
 
 
-function new_state(state, live_neighbors) {
+function get_new_state(state, live_neighbors) {
     if (state == 1 && live_neighbors < 2) {
         return 0
     } else if (state == 1 && live_neighbors < 4) {
@@ -69,7 +69,7 @@ function new_state(state, live_neighbors) {
 }
 
 
-function new_generation(x, n, board) {
+function get_new_generation(x, n, board) {
     offsets["N" ] =  - x     ;
     offsets["NE"] =  -(x - 1);
     offsets["E" ] =        1 ;
@@ -95,7 +95,7 @@ function new_generation(x, n, board) {
             }
         }
 
-        new_cell_state = new_state(cell_state, live_neighbors);
+        new_cell_state = get_new_state(cell_state, live_neighbors);
         new_board = sprintf("%s%d", new_board, new_cell_state);
     };
 
@@ -111,11 +111,11 @@ function life() {
     y = stty_size[1] - 3;  # Minus 1 char for each: border, border, cursor
     n = x * y;
 
-    board = init_board(n);
+    board = get_init_board(n);
 
     while (1) {
-        print_board(x, n, board);
-        board = new_generation(x, n, board);
+        do_print_board(x, n, board);
+        board = get_new_generation(x, n, board);
     }
 }
 
