@@ -22,20 +22,20 @@ function get_init_board(n) {
 }
 
 
-function do_print_border(x) {
-    for (i=1; i <= x; i++) {
-        printf CHAR_BORDER()
-    };
-    print;
-}
-
-
 function get_char_of_state(state) {
     if (state == 1) {
         return CHAR_ALIVE()
     } else if (state == 0) {
         return CHAR_DEAD()
     }
+}
+
+
+function do_print_border(x) {
+    for (i=1; i <= x; i++) {
+        printf CHAR_BORDER()
+    };
+    print;
 }
 
 
