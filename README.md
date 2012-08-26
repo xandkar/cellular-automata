@@ -8,7 +8,7 @@ I want to try several different approaches to implementing Conway's Game of
 Life. It shall be recorded in this repo.
 
 Each of the implementations (living in sequentially numbered directories) shall
-have its own README file, documenting the approach taken.
+(eventually) have its own README file, documenting the approach taken.
 
 
 Summary
@@ -24,7 +24,7 @@ Summary
   __Approach:__ Traditional matrix as nested [array()]
 * __ID:__ 004,
   __Language:__ AWK,
-  __Approach:__ Board as string
+  __Approach:__ Board as string. Ghosts beyond boundaries
 
 
 [array()]: http://www.erlang.org/doc/man/array.html "Which is not actually an array, but an integer-keyed tree."
