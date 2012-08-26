@@ -6,7 +6,7 @@ function CHAR_ALIVE()  {return "o"}
 function CHAR_DEAD()   {return " "}
 
 
-function get_init_cell() {
+function get_random_state() {
     return int(2 * rand())
 }
 
@@ -15,7 +15,7 @@ function get_init_board(n) {
     board = "";
 
     for (i=1; i <= n; i++) {
-        board = sprintf("%s%d", board, get_init_cell())
+        board = sprintf("%s%d", board, get_random_state())
     };
 
     return board
@@ -35,7 +35,7 @@ function do_print_border(x) {
     for (i=1; i <= x; i++) {
         printf CHAR_BORDER()
     };
-    print;
+    print
 }
 
 
@@ -50,7 +50,7 @@ function do_print_board(x, n, board) {
         }
     };
 
-    do_print_border(x);
+    do_print_border(x)
 }
 
 
@@ -86,17 +86,22 @@ function get_new_generation(x, n, board) {
         live_neighbors = 0;
 
         for (direction in offsets) {
-            neighbor = offsets[direction] + cell_id;
+            neighbor_id = offsets[direction] + cell_id;
 
-            # Make sure we're within limmits of the board
-            if ( !(neighbor < 1) && !(neighbor > n)) {
-                neighbor_state = substr(board, neighbor, 1);
-                live_neighbors += neighbor_state;
-            }
+            # -----------------------------------------------------------------
+            # Real neighbors within boundaries, ghosts beyond that!
+            # -----------------------------------------------------------------
+            if ((neighbor_id >= 1) && (neighbor_id <= n)) {
+                neighbor_state = substr(board, neighbor_id, 1)
+            } else {
+                neighbor_state = get_random_state()
+            };
+
+            live_neighbors += neighbor_state
         }
 
         new_cell_state = get_new_state(cell_state, live_neighbors);
-        new_board = sprintf("%s%d", new_board, new_cell_state);
+        new_board = sprintf("%s%d", new_board, new_cell_state)
     };
 
     return new_board
@@ -115,7 +120,7 @@ function life() {
 
     while (1) {
         do_print_board(x, n, board);
-        board = get_new_generation(x, n, board);
+        board = get_new_generation(x, n, board)
     }
 }
 
