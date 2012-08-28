@@ -15,16 +15,20 @@ Summary
 -------
 * __ID:__ 001,
   __Language:__ Erlang,
-  __Approach:__ Each cell is a gen_server process
+  __Approach:__ Board as 1D list. Cells as [gen_server] processes
 * __ID:__ 002,
   __Language:__ OCaml,
-  __Approach:__ Traditional matrix
+  __Approach:__ Board as matrix via functional arrays (sort-of...)
 * __ID:__ 003,
   __Language:__ Erlang,
-  __Approach:__ Traditional matrix as nested [array()]
+  __Approach:__ Board as matrix via [array()]
 * __ID:__ 004,
   __Language:__ AWK,
-  __Approach:__ Board as string. Ghosts beyond boundaries
+  __Approach:__ Board as 1D string. Ghosts beyond boundaries
+* __ID:__ 005,
+  __Language:__ AWK,
+  __Approach:__ Board as simulated 3D array
 
 
 [array()]: http://www.erlang.org/doc/man/array.html "Which is not actually an array, but an integer-keyed tree."
+[gen_server]: http://www.erlang.org/doc/man/gen_server.html
