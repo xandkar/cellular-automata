@@ -59,7 +59,7 @@ function get_new_state(state, live_neighbors) {
 
 
 function set_generation(board, gen_id, y, x) {
-    num_directions = split("N,NE,E,SE,S,SW,W,NW", directions, ",");
+    num_directions = split("N, NE, E, SE, S, SW, W, NW", directions, ", ");
 
     offsets["N" , "x"] =  0;
     offsets["N" , "y"] = -1;
