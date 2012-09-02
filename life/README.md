@@ -4,8 +4,8 @@ Games of Life
 
 Description
 -----------
-I want to try several different approaches to implementing Conway's Game of
-Life. It shall be recorded in this repo.
+I want to try several different approaches to implementing [Conway's Game of
+Life]. It shall be recorded in this repo.
 
 Each of the implementations (living in sequentially numbered directories) shall
 (eventually) have its own README file, documenting the approach taken.
@@ -32,3 +32,4 @@ Summary
 
 [array()]: http://www.erlang.org/doc/man/array.html "Which is not actually an array, but an integer-keyed tree."
 [gen_server]: http://www.erlang.org/doc/man/gen_server.html
+[Conway's Game of Life]: http://en.wikipedia.org/wiki/Conways_Game_of_Life
