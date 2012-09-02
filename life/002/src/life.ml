@@ -107,7 +107,7 @@ let main argv =
   and y = int_of_string argv.(2)
   in
 
-  Random.init (int_of_float (Unix.time ()));
+  Random.self_init ();
 
   life_loop (init_board x y)
 
