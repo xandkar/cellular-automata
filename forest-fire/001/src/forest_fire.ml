@@ -138,6 +138,8 @@ let new_state = function
 
 
 let print_forest forest =
+  term_reset ();
+
   Array.iter
   (
     fun row ->
@@ -175,10 +177,12 @@ let next_generation forest (width, height) prob =
 
 
 let rec burn forest size prob interval =
-  term_reset ();
   print_forest forest;
+
   if interval > 0.0 then minisleep interval;
-  burn (next_generation forest size prob) size prob interval
+
+  let next_forest = next_generation forest size prob in
+  burn next_forest size prob interval
 
 
 let main argv =
@@ -188,6 +192,7 @@ let main argv =
   let forest = init_forest opts.size opts.prob in
 
   term_clear ();
+
   burn forest opts.size opts.prob opts.interval
 
 
