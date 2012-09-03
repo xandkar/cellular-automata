@@ -34,4 +34,4 @@ Usage
 
 Doodles
 -------
-![Doodles](https://github.com/ibnfirnas/life/raw/master/001/doodles.jpg)
+![Doodles](https://raw.github.com/ibnfirnas/cellular-automata/master/life/001/doodles.jpg)
