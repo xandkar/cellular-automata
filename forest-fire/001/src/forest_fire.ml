@@ -7,6 +7,8 @@ open Printf
 let default_f = 0.01  (* Probability of spontaneous ignition *)
 let default_p = 1.0   (* Probability of spontaneous growth *)
 
+let default_interval = 0.1  (* Induced interval between generations *)
+
 let default_x = 80
 let default_y = 25
 
@@ -34,8 +36,9 @@ type direction =
 
 
 type options =
-  { size : int * int
-  ; prob : float * float
+  { size     : int * int
+  ; prob     : float * float
+  ; interval : float
   }
 
 
@@ -59,6 +62,7 @@ let term_reset () =
 let get_opts argv =
   let usage = ""
 
+  and interval = ref default_interval
   and f = ref default_f
   and p = ref default_p
   and x = ref default_x
@@ -70,13 +74,15 @@ let get_opts argv =
     ; ("-p", Arg.Set_float p, " Probability of spontaneous growth.")
     ; ("-x", Arg.Set_int x, " Forest width.")
     ; ("-y", Arg.Set_int y, " Forest height.")
+    ; ("-i", Arg.Set_float interval, " Induced interval between generations.")
     ]
   in
 
   Arg.parse speclist (fun _ -> ()) usage;
 
-  { size = !x, !y
-  ; prob = !f, !p
+  { size     = !x, !y
+  ; prob     = !f, !p
+  ; interval = !interval
   }
 
 
@@ -168,11 +174,11 @@ let next_generation forest (width, height) prob =
   forest
 
 
-let rec burn forest size prob =
+let rec burn forest size prob interval =
   term_reset ();
   print_forest forest;
-  minisleep 0.1;
-  burn (next_generation forest size prob) size prob
+  minisleep interval;
+  burn (next_generation forest size prob) size prob interval
 
 
 let main argv =
@@ -182,7 +188,7 @@ let main argv =
   let forest = init_forest opts.size opts.prob in
 
   term_clear ();
-  burn forest opts.size opts.prob
+  burn forest opts.size opts.prob opts.interval
 
 
 let () = main Sys.argv
