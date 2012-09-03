@@ -14,5 +14,5 @@ clean:
 	@find src \
 		    -iname '*.o' \
 		-or -iname '*.cmi' \
-		-or -iname '*.$(OBJ_EXT)' \
+		-or -iname "*.$(OBJ_EXT)" \
 		| xargs rm
