@@ -4,8 +4,8 @@ open Printf
 (* ------------------------------------------------------------------------- *
  * Constants
  * ------------------------------------------------------------------------- *)
-let f = 0.01  (* Probability of spontaneous ignition *)
-let p = 1.0   (* Probability of spontaneous growth *)
+let default_f = 0.01  (* Probability of spontaneous ignition *)
+let default_p = 1.0   (* Probability of spontaneous growth *)
 
 let default_x = 80
 let default_y = 25
@@ -35,6 +35,7 @@ type direction =
 
 type options =
   { size : int * int
+  ; prob : float * float
   }
 
 
@@ -58,17 +59,24 @@ let term_reset () =
 let get_opts argv =
   let usage = ""
 
+  and f = ref default_f
+  and p = ref default_p
   and x = ref default_x
   and y = ref default_y in
 
-  let speclist = Arg.align [
-    ("-x", Arg.Set_int x, " X.");
-    ("-y", Arg.Set_int y, " Y.");
-  ] in
+  let speclist =
+    Arg.align
+    [ ("-f", Arg.Set_float f, " Probability of spontaneous ignition.")
+    ; ("-p", Arg.Set_float p, " Probability of spontaneous growth.")
+    ; ("-x", Arg.Set_int x, " Forest width.")
+    ; ("-y", Arg.Set_int y, " Forest height.")
+    ]
+  in
 
   Arg.parse speclist (fun _ -> ()) usage;
 
   { size = !x, !y
+  ; prob = !f, !p
   }
 
 
@@ -100,13 +108,13 @@ let is_probable = function
   | _ -> false
 
 
-let init_cell_state = function
+let init_cell_state (_, p) = function
   | () when is_probable p -> Tree
   | ()                    -> Empty
 
 
-let init_forest (x, y) =
-  Array.map (Array.map (init_cell_state)) (Array.make_matrix y x ())
+let init_forest (x, y) prob =
+  Array.map (Array.map (init_cell_state prob)) (Array.make_matrix y x ())
 
 
 let string_of_state = function
@@ -116,11 +124,11 @@ let string_of_state = function
 
 
 let new_state = function
-  | Burning, _                                            -> Empty
-  | Tree,    0                 when is_probable f         -> Burning
-  | Tree,    neighbors_burning when neighbors_burning > 0 -> Burning
-  | Empty,   _                 when is_probable p         -> Tree
-  | state,   _                                            -> state
+  | Burning, _, _                            -> Empty
+  | Tree,    0, (f, _)    when is_probable f -> Burning
+  | Tree,    n_burning, _ when n_burning > 0 -> Burning
+  | Empty,   _, (_, p)    when is_probable p -> Tree
+  | state,   _, _                            -> state
 
 
 let print_forest forest =
@@ -142,7 +150,7 @@ let is_onside width height (x, y) =
   x >= 0 && y >= 0 && x < width && y < height
 
 
-let next_generation forest (width, height) =
+let next_generation forest (width, height) prob =
   Array.mapi
   (
     fun iy row ->
@@ -153,28 +161,28 @@ let next_generation forest (width, height) =
           let neighbors = List.filter (is_onside width height) neighbors in
           let neighbor_states = List.map (fun (x, y) -> forest.(y).(x)) neighbors in
           let burning_states = List.filter (fun s -> s == Burning) neighbor_states in
-          new_state (state, (List.length burning_states))
+          new_state (state, (List.length burning_states), prob)
       )
       row
   )
   forest
 
 
-let rec burn forest size =
+let rec burn forest size prob =
   term_reset ();
   print_forest forest;
   minisleep 0.1;
-  burn (next_generation forest size) size
+  burn (next_generation forest size prob) size prob
 
 
 let main argv =
   Random.self_init ();
 
   let opts = get_opts argv in
-  let forest = init_forest opts.size in
+  let forest = init_forest opts.size opts.prob in
 
   term_clear ();
-  burn forest opts.size
+  burn forest opts.size opts.prob
 
 
 let () = main Sys.argv
