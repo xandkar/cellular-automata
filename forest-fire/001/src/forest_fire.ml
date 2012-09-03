@@ -177,7 +177,7 @@ let next_generation forest (width, height) prob =
 let rec burn forest size prob interval =
   term_reset ();
   print_forest forest;
-  minisleep interval;
+  if interval > 0.0 then minisleep interval;
   burn (next_generation forest size prob) size prob interval
 
 
