@@ -168,7 +168,7 @@ let next_generation forest (width, height) prob =
           let neighbors = List.map (fun (ox, oy) -> ox + ix, oy + iy) offsets in
           let neighbors = List.filter (is_onside width height) neighbors in
           let neighbor_states = List.map (fun (x, y) -> forest.(y).(x)) neighbors in
-          let burning_states = List.filter (fun s -> s == Burning) neighbor_states in
+          let burning_states = List.filter ((==) Burning) neighbor_states in
           new_state (state, (List.length burning_states), prob)
       )
       row
