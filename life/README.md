@@ -13,21 +13,14 @@ Each of the implementations (living in sequentially numbered directories) shall
 
 Summary
 -------
-* __ID:__ 001,
-  __Language:__ Erlang,
-  __Approach:__ Board as 1D list. Cells as [gen_server] processes
-* __ID:__ 002,
-  __Language:__ OCaml,
-  __Approach:__ Board as matrix via functional arrays (sort-of...)
-* __ID:__ 003,
-  __Language:__ Erlang,
-  __Approach:__ Board as matrix via [array()]
-* __ID:__ 004,
-  __Language:__ AWK,
-  __Approach:__ Board as 1D string. Ghosts beyond boundaries
-* __ID:__ 005,
-  __Language:__ AWK,
-  __Approach:__ Board as simulated 3D array
+
+| ID  | Language | Approach |
+|-----|----------|----------|
+| 001 | Erlang   | Board as 1D list. Cells as [gen_server] processes |
+| 002 | OCaml    | Board as matrix via functional arrays (sort-of...) |
+| 003 | Erlang   | Board as matrix via [array()] |
+| 004 | AWK      | Board as 1D string. Ghosts beyond boundaries |
+| 005 | AWK      | Board as simulated 3D array |
 
 
 [array()]: http://www.erlang.org/doc/man/array.html "Which is not actually an array, but an integer-keyed tree."
