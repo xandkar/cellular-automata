@@ -56,6 +56,24 @@ module type CELL = sig
 end
 
 
+module Conway : CELL = struct
+  type t = D | A
+
+  let state = function
+    | D -> 0
+    | A -> 1
+
+  let react t ~states =
+    let live_neighbors = List.fold_left states ~init:0 ~f:(+) in
+    match t with
+    | A when live_neighbors < 2 -> D
+    | A when live_neighbors < 4 -> A
+    | A when live_neighbors > 3 -> D
+    | D when live_neighbors = 3 -> A
+    | t -> t
+end
+
+
 let main () =
   let pool = Matrix.create ~rows:5 ~cols:5 ~data:() in
   Matrix.iter pool ~f:(
