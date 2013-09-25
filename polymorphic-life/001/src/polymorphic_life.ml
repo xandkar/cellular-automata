@@ -47,6 +47,15 @@ module Matrix : MATRIX = struct
 end
 
 
+module type CELL = sig
+  type t
+
+  val state : t -> int
+
+  val react : t -> states:int list -> t
+end
+
+
 let main () =
   let pool = Matrix.create ~rows:5 ~cols:5 ~data:() in
   Matrix.iter pool ~f:(
