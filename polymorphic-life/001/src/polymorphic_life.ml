@@ -74,11 +74,22 @@ module Conway : CELL = struct
 end
 
 
-let main () =
-  let pool = Matrix.create ~rows:5 ~cols:5 ~data:() in
+let main rows cols () =
+  let pool = Matrix.create ~rows ~cols ~data:() in
   Matrix.iter pool ~f:(
     fun ~row ~col ~data:() -> printf "R: %d, K: %d\n" row col
   )
 
 
-let () = main ()
+let spec =
+  let summary = "Polymorphic Cellular Automata" in
+  let spec =
+    let open Command.Spec in
+    empty
+    +> flag "-rows" (optional_with_default 5 int) ~doc:"Height"
+    +> flag "-cols" (optional_with_default 5 int) ~doc:"Width"
+  in
+  Command.basic ~summary spec main
+
+
+let () = Command.run spec
