@@ -13,6 +13,8 @@ module type MATRIX = sig
   val map : 'a t -> f:(row:int -> col:int -> data:'a -> 'b) -> 'b t
 
   val iter : 'a t -> f:(row:int -> col:int -> data:'a -> unit) -> unit
+
+  val print : 'a t -> to_string:('a -> string) -> unit
 end
 
 module Matrix : MATRIX = struct
@@ -28,6 +30,13 @@ module Matrix : MATRIX = struct
           fun col data ->
             f ~row ~col ~data
         )
+    )
+
+  let print t ~to_string =
+    Array.iter t ~f:(
+      fun row ->
+        Array.iter row ~f:(fun x -> printf "%s" (to_string x));
+        print_newline ()
     )
 
   let map t ~f =
@@ -50,6 +59,10 @@ end
 module type CELL = sig
   type t
 
+  val init : unit -> t
+
+  val to_string : t -> string
+
   val state : t -> int
 
   val react : t -> states:int list -> t
@@ -59,9 +72,22 @@ end
 module Conway : CELL = struct
   type t = D | A
 
-  let state = function
+  let of_int = function
+    | 0 -> D
+    | 1 -> A
+    | _ -> assert false
+
+  let to_int = function
     | D -> 0
     | A -> 1
+
+  let to_string = function
+    | D -> " "
+    | A -> "o"
+
+  let init () = Random.int 2 |> of_int
+
+  let state = to_int
 
   let react t ~states =
     let live_neighbors = List.fold_left states ~init:0 ~f:(+) in
@@ -75,10 +101,10 @@ end
 
 
 let main rows cols () =
-  let pool = Matrix.create ~rows ~cols ~data:() in
-  Matrix.iter pool ~f:(
-    fun ~row ~col ~data:() -> printf "R: %d, K: %d\n" row col
-  )
+  Random.self_init ();
+  let init ~row:_ ~col:_ ~data = Conway.init data in
+  let grid = Matrix.create ~rows ~cols ~data:() |> Matrix.map ~f:init in
+  Matrix.print grid ~to_string:Conway.to_string
 
 
 let spec =
