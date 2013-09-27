@@ -4,15 +4,15 @@ open Core.Std
 module type MATRIX = sig
   type 'a t
 
-  val create : rows:int -> cols:int -> data:'a -> 'a t
+  val create : rs:int -> ks:int -> data:'a -> 'a t
 
-  val get : 'a t -> row:int -> col:int -> 'a
+  val get : 'a t -> r:int -> k:int -> 'a
 
   val map : 'a t -> f:('a -> 'b) -> 'b t
 
-  val mapi : 'a t -> f:(row:int -> col:int -> data:'a -> 'b) -> 'b t
+  val mapi : 'a t -> f:(r:int -> k:int -> data:'a -> 'b) -> 'b t
 
-  val iter : 'a t -> f:(row:int -> col:int -> data:'a -> unit) -> unit
+  val iter : 'a t -> f:(r:int -> k:int -> data:'a -> unit) -> unit
 
   val print : 'a t -> to_string:('a -> string) -> unit
 end
@@ -20,22 +20,22 @@ end
 module Matrix : MATRIX = struct
   type 'a t = 'a array array
 
-  let create ~rows ~cols ~data =
-    Array.make_matrix ~dimx:rows ~dimy:cols data
+  let create ~rs ~ks ~data =
+    Array.make_matrix ~dimx:rs ~dimy:ks data
 
   let iter t ~f =
     Array.iteri t ~f:(
-      fun row cols ->
-        Array.iteri cols ~f:(
-          fun col data ->
-            f ~row ~col ~data
+      fun r ks ->
+        Array.iteri ks ~f:(
+          fun k data ->
+            f ~r ~k ~data
         )
     )
 
   let print t ~to_string =
     Array.iter t ~f:(
-      fun row ->
-        Array.iter row ~f:(fun x -> printf "%s" (to_string x));
+      fun r ->
+        Array.iter r ~f:(fun x -> printf "%s" (to_string x));
         print_newline ()
     )
 
@@ -44,15 +44,15 @@ module Matrix : MATRIX = struct
 
   let mapi t ~f =
     Array.mapi t ~f:(
-      fun row cols ->
-        Array.mapi cols ~f:(
-          fun col data ->
-            f ~row ~col ~data
+      fun r ks ->
+        Array.mapi ks ~f:(
+          fun k data ->
+            f ~r ~k ~data
         )
     )
 
-  let get t ~row ~col =
-    t.(row).(col)
+  let get t ~r ~k =
+    t.(r).(k)
 end
 
 
@@ -102,9 +102,9 @@ module Conway : CELL = struct
 end
 
 
-let main rows cols () =
+let main rs ks () =
   Random.self_init ();
-  let grid = Matrix.create ~rows ~cols ~data:() |> Matrix.map ~f:Conway.create in
+  let grid = Matrix.create ~rs ~ks ~data:() |> Matrix.map ~f:Conway.create in
   Matrix.print grid ~to_string:Conway.to_string
 
 
