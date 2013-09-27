@@ -97,7 +97,8 @@ module Conway : CELL = struct
     | A when live_neighbors < 4 -> A
     | A when live_neighbors > 3 -> D
     | D when live_neighbors = 3 -> A
-    | t -> t
+    | A -> A
+    | D -> D
 end
 
 
