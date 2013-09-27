@@ -8,8 +8,6 @@ module type MATRIX = sig
 
   val get : 'a t -> row:int -> col:int -> 'a
 
-  val set : 'a t -> row:int -> col:int -> data:'a -> unit
-
   val map : 'a t -> f:('a -> 'b) -> 'b t
 
   val mapi : 'a t -> f:(row:int -> col:int -> data:'a -> 'b) -> 'b t
@@ -55,9 +53,6 @@ module Matrix : MATRIX = struct
 
   let get t ~row ~col =
     t.(row).(col)
-
-  let set t ~row ~col ~data =
-    t.(row).(col) <- data
 end
 
 
