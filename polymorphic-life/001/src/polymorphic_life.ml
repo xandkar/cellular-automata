@@ -6,7 +6,7 @@ module type MATRIX = sig
 
   val create : rs:int -> ks:int -> data:'a -> 'a t
 
-  val get : 'a t -> r:int -> k:int -> 'a
+  val get_neighbors : 'a t -> r:int -> k:int -> 'a list
 
   val map : 'a t -> f:('a -> 'b) -> 'b t
 
@@ -18,6 +18,28 @@ module type MATRIX = sig
 end
 
 module Matrix : MATRIX = struct
+  module Direction = struct
+    type t = NW | N | NE
+           | W  |     E
+           | SW | S | SE
+
+    let all = [ NW ; N ; NE
+              ; W  ;     E
+              ; SW ; S ; SE
+              ]
+
+    let to_offset = function
+    (*| D  ->  r,  k *)
+      | NW -> -1, -1
+      | N  -> -1,  0
+      | NE -> -1,  1
+      | W  ->  0, -1
+      | E  ->  0,  1
+      | SW ->  1, -1
+      | S  ->  1,  0
+      | SE ->  1,  1
+  end
+
   type 'a t = 'a array array
 
   let create ~rs ~ks ~data =
@@ -53,6 +75,21 @@ module Matrix : MATRIX = struct
 
   let get t ~r ~k =
     t.(r).(k)
+
+  let is_within_bounds t ~r ~k =
+    match t with
+    | [||] -> assert false
+    | t ->
+      r >= 0 && r < Array.length t &&
+      k >= 0 && k < Array.length t.(0)
+
+  let neighborhood t ~r ~k =
+    List.map Direction.all ~f:Direction.to_offset
+    |> List.map ~f:(fun (ro, ko) -> (r + ro), (k + ko))
+    |> List.filter ~f:(fun (r, k) -> is_within_bounds t ~r ~k)
+
+  let get_neighbors t ~r ~k =
+    List.map (neighborhood t ~r ~k) ~f:(fun (r, k) -> get t ~r ~k)
 end
 
 
@@ -105,6 +142,14 @@ end
 let main rs ks () =
   Random.self_init ();
   let grid = Matrix.create ~rs ~ks ~data:() |> Matrix.map ~f:Conway.create in
+  Matrix.print grid ~to_string:Conway.to_string;
+  print_endline (String.make 80 '-');
+  let grid =
+    Matrix.mapi grid ~f:(fun ~r ~k ~data:cell ->
+      let neighbors = Matrix.get_neighbors grid ~r ~k in
+      Conway.react cell ~states:(List.map neighbors ~f:Conway.state)
+    )
+  in
   Matrix.print grid ~to_string:Conway.to_string
 
 
