@@ -85,7 +85,8 @@ module Conway : CELL = struct
     | D -> " "
     | A -> "o"
 
-  let init () = Random.int 2 |> of_int
+  let init () =
+    Random.int 2 |> of_int
 
   let state = to_int
 
