@@ -153,28 +153,31 @@ module Conway : CELL = struct
 end
 
 
-let main rs ks () =
-  Random.self_init ();
-  let grid = Matrix.create ~rs ~ks ~data:() |> Matrix.map ~f:Conway.create in
+let rec loop bar grid =
+  print_endline bar;
   Matrix.print grid ~to_string:Conway.to_string;
-  print_endline (String.make 80 '-');
+  print_endline bar;
   let grid =
     Matrix.mapi grid ~f:(fun point ~data:cell ->
       let neighbors = Matrix.get_neighbors grid point in
       Conway.react cell ~states:(List.map neighbors ~f:Conway.state)
     )
   in
-  Matrix.print grid ~to_string:Conway.to_string
+  Unix.sleep 1;
+  loop bar grid
+
+
+let main () =
+  Random.self_init ();
+  let rs, ks = Or_error.ok_exn Linux_ext.get_terminal_size () in
+  Matrix.create ~rs:(rs - 3) ~ks ~data:()
+  |> Matrix.map ~f:Conway.create
+  |> loop (String.make ks '-')
 
 
 let spec =
   let summary = "Polymorphic Cellular Automata" in
-  let spec =
-    let open Command.Spec in
-    empty
-    +> flag "-rows" (optional_with_default 5 int) ~doc:"Height"
-    +> flag "-cols" (optional_with_default 5 int) ~doc:"Width"
-  in
+  let spec = Command.Spec.empty in
   Command.basic ~summary spec main
 
 
