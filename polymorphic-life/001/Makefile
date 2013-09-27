@@ -9,6 +9,7 @@ build:
 		-use-ocamlfind \
 		-package core \
 		-tag thread \
+		-cflags "-w +A" \
 		src/$(executable_name_ext)
 	@mkdir -p bin/
 	@cp _build/src/$(executable_name_ext) bin/$(executable_name)
