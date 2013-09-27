@@ -10,7 +10,9 @@ module type MATRIX = sig
 
   val set : 'a t -> row:int -> col:int -> data:'a -> unit
 
-  val map : 'a t -> f:(row:int -> col:int -> data:'a -> 'b) -> 'b t
+  val map : 'a t -> f:('a -> 'b) -> 'b t
+
+  val mapi : 'a t -> f:(row:int -> col:int -> data:'a -> 'b) -> 'b t
 
   val iter : 'a t -> f:(row:int -> col:int -> data:'a -> unit) -> unit
 
@@ -40,6 +42,9 @@ module Matrix : MATRIX = struct
     )
 
   let map t ~f =
+    Array.map t ~f:(Array.map ~f:(fun x -> f x))
+
+  let mapi t ~f =
     Array.mapi t ~f:(
       fun row cols ->
         Array.mapi cols ~f:(
@@ -104,8 +109,7 @@ end
 
 let main rows cols () =
   Random.self_init ();
-  let init ~row:_ ~col:_ ~data = Conway.init data in
-  let grid = Matrix.create ~rows ~cols ~data:() |> Matrix.map ~f:init in
+  let grid = Matrix.create ~rows ~cols ~data:() |> Matrix.map ~f:Conway.init in
   Matrix.print grid ~to_string:Conway.to_string
 
 
