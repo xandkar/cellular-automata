@@ -59,7 +59,7 @@ end
 module type CELL = sig
   type t
 
-  val init : unit -> t
+  val create : unit -> t
 
   val to_string : t -> string
 
@@ -85,7 +85,7 @@ module Conway : CELL = struct
     | D -> " "
     | A -> "o"
 
-  let init () =
+  let create () =
     Random.int 2 |> of_int
 
   let state = to_int
@@ -104,7 +104,7 @@ end
 
 let main rows cols () =
   Random.self_init ();
-  let grid = Matrix.create ~rows ~cols ~data:() |> Matrix.map ~f:Conway.init in
+  let grid = Matrix.create ~rows ~cols ~data:() |> Matrix.map ~f:Conway.create in
   Matrix.print grid ~to_string:Conway.to_string
 
 
