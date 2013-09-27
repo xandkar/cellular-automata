@@ -2,22 +2,35 @@ open Core.Std
 
 
 module type MATRIX = sig
+  module Point : sig
+    type t = {r : int; k : int}
+  end
+
   type 'a t
 
   val create : rs:int -> ks:int -> data:'a -> 'a t
 
-  val get_neighbors : 'a t -> r:int -> k:int -> 'a list
+  val get_neighbors : 'a t -> Point.t -> 'a list
 
   val map : 'a t -> f:('a -> 'b) -> 'b t
 
-  val mapi : 'a t -> f:(r:int -> k:int -> data:'a -> 'b) -> 'b t
+  val mapi : 'a t -> f:(Point.t -> data:'a -> 'b) -> 'b t
 
-  val iter : 'a t -> f:(r:int -> k:int -> data:'a -> unit) -> unit
+  val iter : 'a t -> f:(Point.t -> data:'a -> unit) -> unit
 
   val print : 'a t -> to_string:('a -> string) -> unit
 end
 
 module Matrix : MATRIX = struct
+  module Point = struct
+    type t = {r : int; k : int}
+
+    let (+) p p' =
+      { r = p.r + p'.r
+      ; k = p.k + p'.k
+      }
+  end
+
   module Direction = struct
     type t = NW | N | NE
            | W  |     E
@@ -28,16 +41,17 @@ module Matrix : MATRIX = struct
               ; SW ; S ; SE
               ]
 
-    let to_offset = function
-    (*| D  ->  r,  k *)
-      | NW -> -1, -1
-      | N  -> -1,  0
-      | NE -> -1,  1
-      | W  ->  0, -1
-      | E  ->  0,  1
-      | SW ->  1, -1
-      | S  ->  1,  0
-      | SE ->  1,  1
+    let to_offset =
+      let open Point in
+      function
+      | NW -> {r = -1; k = -1}
+      | N  -> {r = -1; k =  0}
+      | NE -> {r = -1; k =  1}
+      | W  -> {r =  0; k = -1}
+      | E  -> {r =  0; k =  1}
+      | SW -> {r =  1; k = -1}
+      | S  -> {r =  1; k =  0}
+      | SE -> {r =  1; k =  1}
   end
 
   type 'a t = 'a array array
@@ -50,7 +64,7 @@ module Matrix : MATRIX = struct
       fun r ks ->
         Array.iteri ks ~f:(
           fun k data ->
-            f ~r ~k ~data
+            f {Point.r; Point.k} ~data
         )
     )
 
@@ -69,27 +83,27 @@ module Matrix : MATRIX = struct
       fun r ks ->
         Array.mapi ks ~f:(
           fun k data ->
-            f ~r ~k ~data
+            f {Point.r; Point.k} ~data
         )
     )
 
-  let get t ~r ~k =
+  let get t {Point.r; Point.k} =
     t.(r).(k)
 
-  let is_within_bounds t ~r ~k =
+  let is_within_bounds t {Point.r; Point.k} =
     match t with
     | [||] -> assert false
     | t ->
       r >= 0 && r < Array.length t &&
       k >= 0 && k < Array.length t.(0)
 
-  let neighborhood t ~r ~k =
+  let neighborhood t point =
     List.map Direction.all ~f:Direction.to_offset
-    |> List.map ~f:(fun (ro, ko) -> (r + ro), (k + ko))
-    |> List.filter ~f:(fun (r, k) -> is_within_bounds t ~r ~k)
+    |> List.map ~f:(fun offset_point -> Point.(point + offset_point))
+    |> List.filter ~f:(is_within_bounds t)
 
-  let get_neighbors t ~r ~k =
-    List.map (neighborhood t ~r ~k) ~f:(fun (r, k) -> get t ~r ~k)
+  let get_neighbors t point =
+    List.map (neighborhood t point) ~f:(get t)
 end
 
 
@@ -145,8 +159,8 @@ let main rs ks () =
   Matrix.print grid ~to_string:Conway.to_string;
   print_endline (String.make 80 '-');
   let grid =
-    Matrix.mapi grid ~f:(fun ~r ~k ~data:cell ->
-      let neighbors = Matrix.get_neighbors grid ~r ~k in
+    Matrix.mapi grid ~f:(fun point ~data:cell ->
+      let neighbors = Matrix.get_neighbors grid point in
       Conway.react cell ~states:(List.map neighbors ~f:Conway.state)
     )
   in
