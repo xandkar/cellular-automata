@@ -9,6 +9,7 @@ build:
 		-use-ocamlfind \
 		-package core \
 		-tag thread \
+		-tag short-paths \
 		-cflags "-w +A-44" \
 		src/$(executable_name_ext)
 	@mkdir -p bin/
