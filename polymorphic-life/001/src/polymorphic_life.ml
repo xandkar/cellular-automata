@@ -107,81 +107,151 @@ module Matrix : MATRIX = struct
 end
 
 
-module type CELL = sig
-  type t
-
-  val create : unit -> t
-
-  val to_string : t -> string
-
-  val state : t -> int
-
-  val react : t -> states:int list -> t
+module Msg = struct
+  type t = string
 end
 
 
-module Conway : CELL = struct
-  type t = D | A
+module State = struct
+  type t = string
+end
 
-  let of_int = function
+
+module PhenoType = struct
+  type t = string
+end
+
+
+module Cell = struct
+  type t = { msg   : Msg.t
+           ; pheno : PhenoType.t
+           ; state : State.t
+           }
+end
+
+
+module type RULE = sig
+  val create : unit -> Cell.t
+
+  val transition : state:State.t -> inputs:Msg.t list -> Cell.t
+end
+
+
+module Conway : RULE = struct
+  type state = D | A
+
+  let state_of_string : (string -> state) = function
+    | "D" -> D
+    | "A" -> A
+    | _   -> assert false
+
+  let state_of_int : (int -> state) = function
     | 0 -> D
     | 1 -> A
     | _ -> assert false
 
-  let to_int = function
+  let int_of_state : (state -> int) = function
     | D -> 0
     | A -> 1
 
-  let to_string = function
+  let string_of_state : (state -> string) = function
+    | D -> "D"
+    | A -> "A"
+
+  let msg_of_state : (state -> Msg.t) =
+    string_of_state
+
+  let pheno_of_state : (state -> PhenoType.t) = function
     | D -> " "
     | A -> "o"
 
-  let create () =
-    Random.int 2 |> of_int
+  let int_of_msg msg =
+    msg |> state_of_string |> int_of_state
 
-  let state = to_int
-
-  let react t ~states =
-    let live_neighbors = List.fold_left states ~init:0 ~f:(+) in
-    match t with
+  let next state ~live_neighbors =
+    match state with
     | A when live_neighbors < 2 -> D
     | A when live_neighbors < 4 -> A
     | A when live_neighbors > 3 -> D
     | D when live_neighbors = 3 -> A
     | A -> A
     | D -> D
+
+  let cell_of_state s =
+    { Cell.msg   = s |> msg_of_state
+    ; Cell.pheno = s |> pheno_of_state
+    ; Cell.state = s |> string_of_state
+    }
+
+  let create () =
+    Random.int 2 |> state_of_int |> cell_of_state
+
+  let live_neighbors inputs =
+    inputs |> List.map ~f:int_of_msg |> List.fold_left ~init:0 ~f:(+)
+
+  let transition ~state ~inputs =
+    state
+    |> state_of_string
+    |> next ~live_neighbors:(live_neighbors inputs)
+    |> cell_of_state
 end
 
 
 module Automaton : sig
   type t
 
-  val create : rows:int -> columns:int -> interval:float -> t
+  val create  : rows:int
+             -> columns:int
+             -> interval:float
+             -> rules: (module RULE) list
+             -> t
 
   val loop : t -> unit
 end = struct
-  type t = { grid     : Conway.t Matrix.t
+  type cell = { data : Cell.t
+              ; rule : (module RULE)
+              }
+
+  type t = { grid     : cell Matrix.t
            ; interval : Time.Span.t
            ; bar      : string
            }
 
-  let create ~rows:rs ~columns:ks ~interval =
-    { grid     = Matrix.map ~f:Conway.create (Matrix.create ~rs ~ks ())
+  let create ~rows:rs ~columns:ks ~interval ~rules =
+    let n = List.length rules in
+    let i = Random.int n in
+    let init () =
+      let rule = List.nth_exn rules i in
+      let module Rule = (val rule : RULE) in
+      { rule
+      ; data = Rule.create ()
+      }
+    in
+    { grid     = Matrix.map ~f:init (Matrix.create ~rs ~ks ())
     ; interval = Time.Span.of_float interval
     ; bar      = String.make ks '-'
     }
 
+  let cell_to_string cell =
+    cell.data.Cell.pheno
+
   let print t =
     print_endline t.bar;
-    Matrix.print t.grid ~to_string:Conway.to_string;
+    Matrix.print t.grid ~to_string:cell_to_string;
     print_endline t.bar
 
   let next t =
     let grid =
       Matrix.mapi t.grid ~f:(
-        fun point cell ->
+        fun point {rule; data} ->
+          let module Rule = (val rule : RULE) in
           let neighbors = Matrix.get_neighbors t.grid point in
-          Conway.react cell ~states:(List.map neighbors ~f:Conway.state)
+          let data =
+            Rule.transition
+              ~state:data.Cell.state
+              ~inputs:(List.map neighbors ~f:(fun cell -> cell.data.Cell.msg))
+          in
+          {rule; data}
       )
     in
     {t with grid}
@@ -196,7 +266,12 @@ end
 let main () =
   Random.self_init ();
   let rows, columns = Or_error.ok_exn Linux_ext.get_terminal_size () in
-  Automaton.create ~rows:(rows - 3) ~columns ~interval:0.1 |> Automaton.loop
+  let interval = 0.1 in
+  let rules =
+    [ (module Conway : RULE)
+    ]
+  in
+  Automaton.create ~rows:(rows - 3) ~columns ~interval ~rules |> Automaton.loop
 
 
 let spec =
