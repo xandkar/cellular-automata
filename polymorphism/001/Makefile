@@ -3,7 +3,7 @@
 EXE_TYPE := native
 
 build:
-	$(eval executable_name     := polymorphic_life)
+	$(eval executable_name     := polymorphism)
 	$(eval executable_name_ext := $(executable_name).$(EXE_TYPE))
 	@ocamlbuild \
 		-use-ocamlfind \
