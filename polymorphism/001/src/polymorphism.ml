@@ -271,7 +271,7 @@ let main () =
     [ (module Conway : RULE)
     ]
   in
-  Automaton.create ~rows:(rows - 3) ~columns ~interval ~rules |> Automaton.loop
+  Automaton.loop (Automaton.create ~rows:(rows - 3) ~columns ~interval ~rules)
 
 
 let spec =
