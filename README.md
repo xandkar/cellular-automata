@@ -11,7 +11,7 @@ Summary
 |----------------|-------------|
 | [Life]         | http://en.wikipedia.org/wiki/Conway's_Game_of_Life |
 | [Forest Fire]  | http://en.wikipedia.org/wiki/Forest-fire_model |
-| [Polymorphism] | Each cell can have different transition rules |
+| [Polymorphism] | Coexistence of different transition rules on the same grid |
 
 
 [Life]: life

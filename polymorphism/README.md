@@ -1,4 +1,4 @@
 Polymorphism
 ============
 
-Each cell can have different state transition rules.
+Coexistence of different state transition rules on the same grid.
