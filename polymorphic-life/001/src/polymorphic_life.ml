@@ -153,34 +153,50 @@ module Conway : CELL = struct
 end
 
 
-type opt = { interval : Time.Span.t
+module Automaton : sig
+  type t
+
+  val create : rows:int -> columns:int -> interval:float -> t
+
+  val loop : t -> unit
+end = struct
+  type t = { grid     : Conway.t Matrix.t
+           ; interval : Time.Span.t
            ; bar      : string
            }
 
+  let create ~rows:rs ~columns:ks ~interval =
+    { grid     = Matrix.map ~f:Conway.create (Matrix.create ~rs ~ks ())
+    ; interval = Time.Span.of_float interval
+    ; bar      = String.make ks '-'
+    }
 
-let rec loop opt grid =
-  print_endline opt.bar;
-  Matrix.print grid ~to_string:Conway.to_string;
-  print_endline opt.bar;
+  let print t =
+    print_endline t.bar;
+    Matrix.print t.grid ~to_string:Conway.to_string;
+    print_endline t.bar
 
-  let grid =
-    Matrix.mapi grid ~f:(fun point cell ->
-      let neighbors = Matrix.get_neighbors grid point in
-      Conway.react cell ~states:(List.map neighbors ~f:Conway.state)
-    )
-  in
-  Time.pause opt.interval;
-  loop opt grid
+  let next t =
+    let grid =
+      Matrix.mapi t.grid ~f:(
+        fun point cell ->
+          let neighbors = Matrix.get_neighbors t.grid point in
+          Conway.react cell ~states:(List.map neighbors ~f:Conway.state)
+      )
+    in
+    {t with grid}
+
+  let rec loop t =
+    print t;
+    Time.pause t.interval;
+    loop (next t)
+end
 
 
 let main () =
   Random.self_init ();
-  let rs, ks = Or_error.ok_exn Linux_ext.get_terminal_size () in
-  Matrix.create ~rs:(rs - 3) ~ks ()
-  |> Matrix.map ~f:Conway.create
-  |> loop { interval = Time.Span.of_float 0.1
-          ; bar      = String.make ks '-'
-          }
+  let rows, columns = Or_error.ok_exn Linux_ext.get_terminal_size () in
+  Automaton.create ~rows:(rows - 3) ~columns ~interval:0.1 |> Automaton.loop
 
 
 let spec =
