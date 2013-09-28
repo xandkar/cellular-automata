@@ -197,6 +197,21 @@ module Conway : RULE = struct
 end
 
 
+module Terminal : sig
+  val clear : unit -> unit
+  val reset : unit -> unit
+end = struct
+  let ansi_code_clear = "\027[2J"    (* Clear screen *)
+  let ansi_code_reset = "\027[1;1H"  (* Reset cursor position *)
+
+  let clear () =
+    print_string ansi_code_clear
+
+  let reset () =
+    print_string ansi_code_reset
+end
+
+
 module Automaton : sig
   type t
 
@@ -227,6 +242,7 @@ end = struct
       ; data = Rule.create ()
       }
     in
+    Terminal.clear ();
     { grid     = Matrix.map ~f:init (Matrix.create ~rs ~ks ())
     ; interval = Time.Span.of_float interval
     ; bar      = String.make ks '-'
@@ -236,6 +252,7 @@ end = struct
     cell.data.Cell.pheno
 
   let print t =
+    Terminal.reset ();
     print_endline t.bar;
     Matrix.print t.grid ~to_string:cell_to_string;
     print_endline t.bar
