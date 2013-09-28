@@ -198,11 +198,29 @@ end
 
 
 module Terminal : sig
+  type color = [ `green
+               | `red
+               ]
+
+  val string_with_color : string -> color -> string
+
   val clear : unit -> unit
+
   val reset : unit -> unit
 end = struct
+  type color = [ `green
+               | `red
+               ]
+
   let ansi_code_clear = "\027[2J"    (* Clear screen *)
   let ansi_code_reset = "\027[1;1H"  (* Reset cursor position *)
+
+  let string_of_color = function
+    | `green -> "\027[0;32m"
+    | `red   -> "\027[1;31m"
+
+  let string_with_color s c =
+    sprintf "%s%s\027[0m" (string_of_color c) s
 
   let clear () =
     print_string ansi_code_clear
