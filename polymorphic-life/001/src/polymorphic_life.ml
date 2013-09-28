@@ -153,7 +153,7 @@ module Conway : CELL = struct
 end
 
 
-let rec loop bar grid =
+let rec loop bar pause_span grid =
   print_endline bar;
   Matrix.print grid ~to_string:Conway.to_string;
   print_endline bar;
@@ -163,8 +163,8 @@ let rec loop bar grid =
       Conway.react cell ~states:(List.map neighbors ~f:Conway.state)
     )
   in
-  Unix.sleep 1;
-  loop bar grid
+  Time.pause pause_span;
+  loop bar pause_span grid
 
 
 let main () =
@@ -172,7 +172,7 @@ let main () =
   let rs, ks = Or_error.ok_exn Linux_ext.get_terminal_size () in
   Matrix.create ~rs:(rs - 3) ~ks ~data:()
   |> Matrix.map ~f:Conway.create
-  |> loop (String.make ks '-')
+  |> loop (String.make ks '-') (Time.Span.of_float 0.1)
 
 
 let spec =
