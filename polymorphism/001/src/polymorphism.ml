@@ -150,8 +150,25 @@ module State = struct
 end
 
 
-module PhenoType = struct
-  type t = string
+module PhenoType : sig
+  type t
+
+  val create : char -> Terminal.color option -> t
+
+  val to_string : t -> string
+end = struct
+  type t = { color     : Terminal.color option
+           ; character : char
+           }
+
+  let create character color =
+    {color; character}
+
+  let to_string = function
+    | {color=None; character} ->
+      String.of_char character
+    | {color=Some c; character} ->
+      Terminal.string_with_color (String.of_char character) c
 end
 
 
@@ -195,8 +212,8 @@ module Conway : RULE = struct
     string_of_state
 
   let pheno_of_state : (state -> PhenoType.t) = function
-    | D -> " "
-    | A -> "o"
+    | D -> PhenoType.create ' ' None
+    | A -> PhenoType.create 'o' None
 
   let int_of_msg msg =
     msg |> state_of_string |> int_of_state
@@ -267,7 +284,7 @@ end = struct
     }
 
   let cell_to_string cell =
-    cell.data.Cell.pheno
+    PhenoType.to_string cell.data.Cell.pheno
 
   let print t =
     Terminal.reset ();
