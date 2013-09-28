@@ -8,15 +8,15 @@ module type MATRIX = sig
 
   type 'a t
 
-  val create : rs:int -> ks:int -> data:'a -> 'a t
+  val create : rs:int -> ks:int -> 'a -> 'a t
 
   val get_neighbors : 'a t -> Point.t -> 'a list
 
   val map : 'a t -> f:('a -> 'b) -> 'b t
 
-  val mapi : 'a t -> f:(Point.t -> data:'a -> 'b) -> 'b t
+  val mapi : 'a t -> f:(Point.t -> 'a -> 'b) -> 'b t
 
-  val iter : 'a t -> f:(Point.t -> data:'a -> unit) -> unit
+  val iter : 'a t -> f:(Point.t -> 'a -> unit) -> unit
 
   val print : 'a t -> to_string:('a -> string) -> unit
 end
@@ -56,15 +56,15 @@ module Matrix : MATRIX = struct
 
   type 'a t = 'a array array
 
-  let create ~rs ~ks ~data =
-    Array.make_matrix ~dimx:rs ~dimy:ks data
+  let create ~rs ~ks x =
+    Array.make_matrix ~dimx:rs ~dimy:ks x
 
   let iter t ~f =
     Array.iteri t ~f:(
       fun r ks ->
         Array.iteri ks ~f:(
-          fun k data ->
-            f {Point.r; Point.k} ~data
+          fun k x ->
+            f {Point.r; Point.k} x
         )
     )
 
@@ -82,8 +82,8 @@ module Matrix : MATRIX = struct
     Array.mapi t ~f:(
       fun r ks ->
         Array.mapi ks ~f:(
-          fun k data ->
-            f {Point.r; Point.k} ~data
+          fun k x ->
+            f {Point.r; Point.k} x
         )
     )
 
@@ -164,7 +164,7 @@ let rec loop opt grid =
   print_endline opt.bar;
 
   let grid =
-    Matrix.mapi grid ~f:(fun point ~data:cell ->
+    Matrix.mapi grid ~f:(fun point cell ->
       let neighbors = Matrix.get_neighbors grid point in
       Conway.react cell ~states:(List.map neighbors ~f:Conway.state)
     )
@@ -176,7 +176,7 @@ let rec loop opt grid =
 let main () =
   Random.self_init ();
   let rs, ks = Or_error.ok_exn Linux_ext.get_terminal_size () in
-  Matrix.create ~rs:(rs - 3) ~ks ~data:()
+  Matrix.create ~rs:(rs - 3) ~ks ()
   |> Matrix.map ~f:Conway.create
   |> loop { interval = Time.Span.of_float 0.1
           ; bar      = String.make ks '-'
