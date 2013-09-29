@@ -288,7 +288,7 @@ module ForestFire : RULE = struct
     Random.int 3 |> state_of_int |> cell_of_state
 
   let f = 0.000001  (* Probability of spontaneous ignition *)
-  let p = 0.1   (* Probability of spontaneous growth *)
+  let p = 0.1       (* Probability of spontaneous growth *)
 
   let is_probable = function
     | probability when (Random.float 1.0) <= probability -> true
