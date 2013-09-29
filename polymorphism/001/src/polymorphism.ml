@@ -4,6 +4,7 @@ open Core.Std
 module Terminal : sig
   type color = [ `green
                | `red
+               | `white
                ]
 
   val string_with_color : string -> color -> string
@@ -14,6 +15,7 @@ module Terminal : sig
 end = struct
   type color = [ `green
                | `red
+               | `white
                ]
 
   let ansi_code_clear = "\027[2J"    (* Clear screen *)
@@ -22,6 +24,7 @@ end = struct
   let string_of_color = function
     | `green -> "\027[0;32m"
     | `red   -> "\027[1;31m"
+    | `white -> "\027[1;37m"
 
   let string_with_color s c =
     sprintf "%s%s\027[0m" (string_of_color c) s
@@ -213,7 +216,7 @@ module Life : RULE = struct
 
   let pheno_of_state : (state -> PhenoType.t) = function
     | D -> PhenoType.create ' ' None
-    | A -> PhenoType.create 'o' None
+    | A -> PhenoType.create 'o' (Some `white)
 
   let int_of_msg msg =
     msg |> state_of_string |> int_of_state
