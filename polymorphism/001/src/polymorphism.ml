@@ -406,10 +406,9 @@ end = struct
 end
 
 
-let main () =
+let main interval () =
   Random.self_init ();
   let rows, columns = Or_error.ok_exn Linux_ext.get_terminal_size () in
-  let interval = 0.1 in
   let rules =
     [ (module Life : RULE)
     ; (module ForestFire : RULE)
@@ -420,7 +419,11 @@ let main () =
 
 let spec =
   let summary = "Polymorphic Cellular Automata" in
-  let spec = Command.Spec.empty in
+  let spec = Command.Spec.(empty
+    +> flag "-i" (optional_with_default 0.1 float)
+             ~doc:" Induced interval between generations."
+    )
+  in
   Command.basic ~summary spec main
 
 
