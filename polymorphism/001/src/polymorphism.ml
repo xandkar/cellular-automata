@@ -187,7 +187,7 @@ module type RULE = sig
 end
 
 
-module Conway : RULE = struct
+module Life : RULE = struct
   type state = D | A
 
   let state_of_string : (string -> state) = function
@@ -387,7 +387,7 @@ let main () =
   let rows, columns = Or_error.ok_exn Linux_ext.get_terminal_size () in
   let interval = 0.1 in
   let rules =
-    [ (module Conway : RULE)
+    [ (module Life : RULE)
     ; (module ForestFire : RULE)
     ]
   in
