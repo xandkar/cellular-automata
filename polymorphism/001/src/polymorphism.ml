@@ -237,12 +237,81 @@ module Conway : RULE = struct
     Random.int 2 |> state_of_int |> cell_of_state
 
   let live_neighbors inputs =
-    inputs |> List.map ~f:int_of_msg |> List.fold_left ~init:0 ~f:(+)
+    inputs
+    |> List.filter ~f:(function "D" | "A" -> true | _ -> false)
+    |> List.map ~f:int_of_msg
+    |> List.fold_left ~init:0 ~f:(+)
 
   let transition ~state ~inputs =
     state
     |> state_of_string
     |> next ~live_neighbors:(live_neighbors inputs)
+    |> cell_of_state
+end
+
+
+module ForestFire : RULE = struct
+  type state = E | T | B
+
+  let string_of_state : (state -> string) = function
+    | E -> "E"
+    | T -> "T"
+    | B -> "B"
+
+  let msg_of_state : (state -> Msg.t) =
+    string_of_state
+
+  let pheno_of_state : (state -> PhenoType.t) = function
+    | E -> PhenoType.create ' ' None
+    | T -> PhenoType.create 'T' (Some `green)
+    | B -> PhenoType.create '#' (Some `red)
+
+  let cell_of_state s =
+    { Cell.msg   = s |> msg_of_state
+    ; Cell.pheno = s |> pheno_of_state
+    ; Cell.state = s |> string_of_state
+    }
+
+  let state_of_string : (string -> state) = function
+    | "E" -> E
+    | "T" -> T
+    | "B" -> B
+    | _   -> assert false
+
+  let state_of_int : (int -> state) = function
+    | 0 -> E
+    | 1 -> T
+    | 2 -> B
+    | _ -> assert false
+
+  let create () =
+    Random.int 3 |> state_of_int |> cell_of_state
+
+  let f = 0.000001  (* Probability of spontaneous ignition *)
+  let p = 0.1   (* Probability of spontaneous growth *)
+
+  let is_probable = function
+    | probability when (Random.float 1.0) <= probability -> true
+    | _ -> false
+
+  let next state ~burning_neighbors =
+    match state, burning_neighbors with
+    | E, _ when is_probable p         -> T
+    | E, _                            -> E
+    | T, 0 when is_probable f         -> B
+    | T, _ when burning_neighbors > 0 -> B
+    | T, _                            -> T
+    | B, _                            -> E
+
+  let burning_neighbors inputs =
+    inputs
+    |> List.filter_map ~f:(function "B" -> Some 1 | _ -> None)
+    |> List.fold_left ~init:0 ~f:(+)
+
+  let transition ~state ~inputs =
+    state
+    |> state_of_string
+    |> next ~burning_neighbors:(burning_neighbors inputs)
     |> cell_of_state
 end
 
@@ -269,9 +338,8 @@ end = struct
 
   let create ~rows:rs ~columns:ks ~interval ~rules =
     let n = List.length rules in
-    let i = Random.int n in
     let init () =
-      let rule = List.nth_exn rules i in
+      let rule = List.nth_exn rules (Random.int n) in
       let module Rule = (val rule : RULE) in
       { rule
       ; data = Rule.create ()
@@ -321,6 +389,7 @@ let main () =
   let interval = 0.1 in
   let rules =
     [ (module Conway : RULE)
+    ; (module ForestFire : RULE)
     ]
   in
   Automaton.loop (Automaton.create ~rows:(rows - 3) ~columns ~interval ~rules)
