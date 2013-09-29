@@ -1,6 +1,9 @@
 open Core.Std
 
 
+let (|-) g f x = f (g x)
+
+
 module Terminal : sig
   type color = [ `green
                | `red
@@ -143,16 +146,6 @@ module Matrix : MATRIX = struct
 end
 
 
-module Msg = struct
-  type t = string
-end
-
-
-module State = struct
-  type t = string
-end
-
-
 module PhenoType : sig
   type t
 
@@ -176,9 +169,13 @@ end
 
 
 module Cell = struct
-  type t = { msg   : Msg.t
+  module State = struct
+    type t = Alive of char
+           | Dead
+  end
+
+  type t = { state : State.t
            ; pheno : PhenoType.t
-           ; state : State.t
            }
 end
 
@@ -186,109 +183,133 @@ end
 module type RULE = sig
   val create : unit -> Cell.t
 
-  val transition : state:State.t -> inputs:Msg.t list -> Cell.t
+  val transition : self:Cell.State.t
+                -> neighbors:Cell.State.t list
+                -> Cell.t
 end
 
 
 module Life : RULE = struct
-  type state = D | A
+  module State : sig
+    type t = D | A
 
-  let state_of_string : (string -> state) = function
-    | "D" -> D
-    | "A" -> A
-    | _   -> assert false
+    val of_int : int -> t
 
-  let state_of_int : (int -> state) = function
-    | 0 -> D
-    | 1 -> A
-    | _ -> assert false
+    val to_int : t -> int
 
-  let int_of_state : (state -> int) = function
-    | D -> 0
-    | A -> 1
+    val to_cell : t -> Cell.t
 
-  let string_of_state : (state -> string) = function
-    | D -> "D"
-    | A -> "A"
+    val of_cell_state : Cell.State.t -> t
+  end = struct
+    type t = D | A
 
-  let msg_of_state : (state -> Msg.t) =
-    string_of_state
+    let of_int = function
+      | 0 -> D
+      | 1 -> A
+      | _ -> assert false
 
-  let pheno_of_state : (state -> PhenoType.t) = function
-    | D -> PhenoType.create ' ' None
-    | A -> PhenoType.create 'o' (Some `white)
+    let to_int = function
+      | D -> 0
+      | A -> 1
 
-  let int_of_msg msg =
-    msg |> state_of_string |> int_of_state
+    let to_pheno = function
+      | D -> PhenoType.create ' ' None
+      | A -> PhenoType.create 'o' (Some `white)
+
+    let of_cell_state = function
+      | Cell.State.Dead      -> D
+      | Cell.State.Alive 'A' -> A
+      | Cell.State.Alive _   -> D  (* Foreign cell *)
+
+    let to_cell_state = function
+      | D -> Cell.State.Dead
+      | A -> Cell.State.Alive 'A'
+
+    let to_cell t =
+      { Cell.state = t |> to_cell_state
+      ; Cell.pheno = t |> to_pheno
+      }
+  end
 
   let next state ~live_neighbors =
     match state with
-    | A when live_neighbors < 2 -> D
-    | A when live_neighbors < 4 -> A
-    | A when live_neighbors > 3 -> D
-    | D when live_neighbors = 3 -> A
-    | A -> A
-    | D -> D
-
-  let cell_of_state s =
-    { Cell.msg   = s |> msg_of_state
-    ; Cell.pheno = s |> pheno_of_state
-    ; Cell.state = s |> string_of_state
-    }
+    | State.A when live_neighbors < 2 -> State.D
+    | State.A when live_neighbors < 4 -> State.A
+    | State.A when live_neighbors > 3 -> State.D
+    | State.D when live_neighbors = 3 -> State.A
+    | State.A -> State.A
+    | State.D -> State.D
 
   let create () =
-    Random.int 2 |> state_of_int |> cell_of_state
+    Random.int 2 |> State.of_int |> State.to_cell
 
-  let live_neighbors inputs =
-    inputs
-    |> List.filter ~f:(function "D" | "A" -> true | _ -> false)
-    |> List.map ~f:int_of_msg
-    |> List.fold_left ~init:0 ~f:(+)
+  let live_neighbors neighbors =
+    neighbors |> List.map ~f:(State.of_cell_state |- State.to_int)
+              |> List.fold_left ~init:0 ~f:(+)
 
-  let transition ~state ~inputs =
-    state
-    |> state_of_string
-    |> next ~live_neighbors:(live_neighbors inputs)
-    |> cell_of_state
+  let transition ~self ~neighbors =
+    self |> State.of_cell_state
+         |> next ~live_neighbors:(live_neighbors neighbors)
+         |> State.to_cell
 end
 
 
 module ForestFire : RULE = struct
-  type state = E | T | B
+  module State : sig
+    type t = E | T | B
 
-  let string_of_state : (state -> string) = function
-    | E -> "E"
-    | T -> "T"
-    | B -> "B"
+    val is_burning : t -> bool
 
-  let msg_of_state : (state -> Msg.t) =
-    string_of_state
+    val of_int : int -> t
 
-  let pheno_of_state : (state -> PhenoType.t) = function
-    | E -> PhenoType.create ' ' None
-    | T -> PhenoType.create 'T' (Some `green)
-    | B -> PhenoType.create '#' (Some `red)
+    val to_int : t -> int
 
-  let cell_of_state s =
-    { Cell.msg   = s |> msg_of_state
-    ; Cell.pheno = s |> pheno_of_state
-    ; Cell.state = s |> string_of_state
-    }
+    val to_cell : t -> Cell.t
 
-  let state_of_string : (string -> state) = function
-    | "E" -> E
-    | "T" -> T
-    | "B" -> B
-    | _   -> assert false
+    val of_cell_state : Cell.State.t -> t
+  end = struct
+    type t = E | T | B
 
-  let state_of_int : (int -> state) = function
-    | 0 -> E
-    | 1 -> T
-    | 2 -> B
-    | _ -> assert false
+    let is_burning = function
+      | E -> false
+      | T -> false
+      | B -> true
+
+    let of_int = function
+      | 0 -> E
+      | 1 -> T
+      | 2 -> B
+      | _ -> assert false
+
+    let to_int = function
+      | E -> 0
+      | T -> 1
+      | B -> 2
+
+    let to_pheno = function
+      | E -> PhenoType.create ' ' None
+      | T -> PhenoType.create 'T' (Some `green)
+      | B -> PhenoType.create '#' (Some `red)
+
+    let of_cell_state = function
+      | Cell.State.Dead      -> E
+      | Cell.State.Alive 'T' -> T
+      | Cell.State.Alive 'B' -> B
+      | Cell.State.Alive _   -> E  (* Foreign cell *)
+
+    let to_cell_state = function
+      | E -> Cell.State.Dead
+      | T -> Cell.State.Alive 'T'
+      | B -> Cell.State.Alive 'B'
+
+    let to_cell t =
+      { Cell.state = t |> to_cell_state
+      ; Cell.pheno = t |> to_pheno
+      }
+  end
 
   let create () =
-    Random.int 3 |> state_of_int |> cell_of_state
+    Random.int 3 |> State.of_int |> State.to_cell
 
   let f = 0.000001  (* Probability of spontaneous ignition *)
   let p = 0.1       (* Probability of spontaneous growth *)
@@ -298,23 +319,23 @@ module ForestFire : RULE = struct
 
   let next state ~burning_neighbors =
     match state, burning_neighbors with
-    | E, _ when is_probable p         -> T
-    | E, _                            -> E
-    | T, 0 when is_probable f         -> B
-    | T, _ when burning_neighbors > 0 -> B
-    | T, _                            -> T
-    | B, _                            -> E
+    | State.E, _ when is_probable p         -> State.T
+    | State.E, _                            -> State.E
+    | State.T, 0 when is_probable f         -> State.B
+    | State.T, _ when burning_neighbors > 0 -> State.B
+    | State.T, _                            -> State.T
+    | State.B, _                            -> State.E
 
-  let burning_neighbors inputs =
-    inputs
-    |> List.filter_map ~f:(function "B" -> Some 1 | _ -> None)
-    |> List.fold_left ~init:0 ~f:(+)
+  let burning_neighbors neighbors =
+    neighbors |> List.map ~f:State.of_cell_state
+              |> List.filter ~f:State.is_burning
+              |> List.map ~f:State.to_int
+              |> List.fold_left ~init:0 ~f:(+)
 
-  let transition ~state ~inputs =
-    state
-    |> state_of_string
-    |> next ~burning_neighbors:(burning_neighbors inputs)
-    |> cell_of_state
+  let transition ~self ~neighbors =
+    self |> State.of_cell_state
+         |> next ~burning_neighbors:(burning_neighbors neighbors)
+         |> State.to_cell
 end
 
 
@@ -370,8 +391,8 @@ end = struct
           let neighbors = Matrix.get_neighbors t.grid point in
           let data =
             Rule.transition
-              ~state:data.Cell.state
-              ~inputs:(List.map neighbors ~f:(fun cell -> cell.data.Cell.msg))
+              ~self:data.Cell.state
+              ~neighbors:(List.map neighbors ~f:(fun c -> c.data.Cell.state))
           in
           {rule; data}
       )
