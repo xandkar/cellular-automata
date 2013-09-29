@@ -290,9 +290,8 @@ module ForestFire : RULE = struct
   let f = 0.000001  (* Probability of spontaneous ignition *)
   let p = 0.1       (* Probability of spontaneous growth *)
 
-  let is_probable = function
-    | probability when (Random.float 1.0) <= probability -> true
-    | _ -> false
+  let is_probable p =
+    (Random.float 1.0) <= p
 
   let next state ~burning_neighbors =
     match state, burning_neighbors with
