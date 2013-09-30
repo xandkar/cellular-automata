@@ -170,7 +170,11 @@ end
 
 module Cell = struct
   module State = struct
-    type t = Alive of char
+    type intention = Friendly
+                   | Neutral
+                   | Hostile
+
+    type t = Alive of intention
            | Dead
   end
 
@@ -217,13 +221,14 @@ module Life : RULE = struct
       | A -> PhenoType.create 'o' (Some `white)
 
     let of_cell_state = function
-      | Cell.State.Dead      -> D
-      | Cell.State.Alive 'A' -> A
-      | Cell.State.Alive _   -> D  (* Foreign cell *)
+      | Cell.State.Dead                      -> D
+      | Cell.State.Alive Cell.State.Friendly -> A
+      | Cell.State.Alive Cell.State.Neutral  -> A
+      | Cell.State.Alive Cell.State.Hostile  -> D
 
     let to_cell_state = function
       | D -> Cell.State.Dead
-      | A -> Cell.State.Alive 'A'
+      | A -> Cell.State.Alive Cell.State.Neutral
 
     let to_cell t =
       { Cell.state = t |> to_cell_state
@@ -292,15 +297,15 @@ module ForestFire : RULE = struct
       | B -> PhenoType.create '#' (Some `red)
 
     let of_cell_state = function
-      | Cell.State.Dead      -> E
-      | Cell.State.Alive 'T' -> T
-      | Cell.State.Alive 'B' -> B
-      | Cell.State.Alive _   -> E  (* Foreign cell *)
+      | Cell.State.Dead                      -> E
+      | Cell.State.Alive Cell.State.Friendly -> T
+      | Cell.State.Alive Cell.State.Neutral  -> E
+      | Cell.State.Alive Cell.State.Hostile  -> B
 
     let to_cell_state = function
       | E -> Cell.State.Dead
-      | T -> Cell.State.Alive 'T'
-      | B -> Cell.State.Alive 'B'
+      | T -> Cell.State.Alive Cell.State.Friendly
+      | B -> Cell.State.Alive Cell.State.Hostile
 
     let to_cell t =
       { Cell.state = t |> to_cell_state
