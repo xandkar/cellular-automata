@@ -4,7 +4,8 @@ open Core.Std
 let (|-) g f x = f (g x)
 
 
-module Terminal : sig
+module Terminal :
+sig
   type color = [ `green
                | `red
                | `white
@@ -15,7 +16,8 @@ module Terminal : sig
   val clear : unit -> unit
 
   val reset : unit -> unit
-end = struct
+end =
+struct
   type color = [ `green
                | `red
                | `white
@@ -40,8 +42,10 @@ end = struct
 end
 
 
-module type MATRIX = sig
-  module Point : sig
+module Matrix :
+sig
+  module Point :
+  sig
     type t = {r : int; k : int}
   end
 
@@ -58,10 +62,10 @@ module type MATRIX = sig
   val iter : 'a t -> f:(Point.t -> 'a -> unit) -> unit
 
   val print : 'a t -> to_string:('a -> string) -> unit
-end
-
-module Matrix : MATRIX = struct
-  module Point = struct
+end =
+struct
+  module Point =
+  struct
     type t = {r : int; k : int}
 
     let (+) p p' =
@@ -70,7 +74,8 @@ module Matrix : MATRIX = struct
       }
   end
 
-  module Direction = struct
+  module Direction =
+  struct
     type t = NW | N | NE
            | W  |     E
            | SW | S | SE
@@ -146,13 +151,15 @@ module Matrix : MATRIX = struct
 end
 
 
-module PhenoType : sig
+module PhenoType :
+sig
   type t
 
   val create : char -> Terminal.color option -> t
 
   val to_string : t -> string
-end = struct
+end =
+struct
   type t = { color     : Terminal.color option
            ; character : char
            }
@@ -168,8 +175,10 @@ end = struct
 end
 
 
-module Cell = struct
-  module State = struct
+module Cell =
+struct
+  module State =
+  struct
     type intention = Friendly
                    | Neutral
                    | Hostile
@@ -184,7 +193,8 @@ module Cell = struct
 end
 
 
-module type RULE = sig
+module type RULE =
+sig
   val create : unit -> Cell.t
 
   val transition : self:Cell.State.t
@@ -193,8 +203,10 @@ module type RULE = sig
 end
 
 
-module Life : RULE = struct
-  module State : sig
+module Life : RULE =
+struct
+  module State :
+  sig
     type t = D | A
 
     val of_int : int -> t
@@ -204,7 +216,8 @@ module Life : RULE = struct
     val to_cell : t -> Cell.t
 
     val of_cell_state : Cell.State.t -> t
-  end = struct
+  end =
+  struct
     type t = D | A
 
     let of_int = function
@@ -259,8 +272,10 @@ module Life : RULE = struct
 end
 
 
-module ForestFire : RULE = struct
-  module State : sig
+module ForestFire : RULE =
+struct
+  module State :
+  sig
     type t = E | T | B
 
     val is_burning : t -> bool
@@ -272,7 +287,8 @@ module ForestFire : RULE = struct
     val to_cell : t -> Cell.t
 
     val of_cell_state : Cell.State.t -> t
-  end = struct
+  end =
+  struct
     type t = E | T | B
 
     let is_burning = function
@@ -344,7 +360,8 @@ module ForestFire : RULE = struct
 end
 
 
-module Automaton : sig
+module Automaton :
+sig
   type t
 
   val create  : rows:int
@@ -354,7 +371,8 @@ module Automaton : sig
              -> t
 
   val loop : t -> unit
-end = struct
+end =
+struct
   type cell = { data : Cell.t
               ; rule : (module RULE)
               }
