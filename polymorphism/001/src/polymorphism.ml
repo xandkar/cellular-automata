@@ -263,13 +263,13 @@ struct
   let create () =
     Random.int 2 |> State.of_int |> State.to_cell
 
-  let live_neighbors neighbors =
+  let count_of_live neighbors =
     neighbors |> List.map ~f:(State.of_cell_state |- State.to_int)
               |> List.fold_left ~init:0 ~f:(+)
 
   let transition ~self ~neighbors =
     self |> State.of_cell_state
-         |> State.next ~live_neighbors:(live_neighbors neighbors)
+         |> State.next ~live_neighbors:(count_of_live neighbors)
          |> State.to_cell
 end
 
@@ -351,7 +351,7 @@ struct
   let create () =
     Random.int 3 |> State.of_int |> State.to_cell
 
-  let burning_neighbors neighbors =
+  let count_of_burning neighbors =
     neighbors |> List.map ~f:State.of_cell_state
               |> List.filter ~f:State.is_burning
               |> List.map ~f:State.to_int
@@ -359,7 +359,7 @@ struct
 
   let transition ~self ~neighbors =
     self |> State.of_cell_state
-         |> State.next ~burning_neighbors:(burning_neighbors neighbors)
+         |> State.next ~burning_neighbors:(count_of_burning neighbors)
          |> State.to_cell
 end
 
