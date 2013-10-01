@@ -216,6 +216,8 @@ struct
     val to_cell : t -> Cell.t
 
     val of_cell_state : Cell.State.t -> t
+
+    val next : t -> live_neighbors:int -> t
   end =
   struct
     type t = D | A
@@ -247,16 +249,16 @@ struct
       { Cell.state = t |> to_cell_state
       ; Cell.pheno = t |> to_pheno
       }
-  end
 
-  let next state ~live_neighbors =
-    match state with
-    | State.A when live_neighbors < 2 -> State.D
-    | State.A when live_neighbors < 4 -> State.A
-    | State.A when live_neighbors > 3 -> State.D
-    | State.D when live_neighbors = 3 -> State.A
-    | State.A -> State.A
-    | State.D -> State.D
+    let next t ~live_neighbors =
+      match t with
+      | A when live_neighbors < 2 -> D
+      | A when live_neighbors < 4 -> A
+      | A when live_neighbors > 3 -> D
+      | D when live_neighbors = 3 -> A
+      | A -> A
+      | D -> D
+  end
 
   let create () =
     Random.int 2 |> State.of_int |> State.to_cell
@@ -267,7 +269,7 @@ struct
 
   let transition ~self ~neighbors =
     self |> State.of_cell_state
-         |> next ~live_neighbors:(live_neighbors neighbors)
+         |> State.next ~live_neighbors:(live_neighbors neighbors)
          |> State.to_cell
 end
 
@@ -287,6 +289,8 @@ struct
     val to_cell : t -> Cell.t
 
     val of_cell_state : Cell.State.t -> t
+
+    val next : t -> burning_neighbors:int -> t
   end =
   struct
     type t = E | T | B
@@ -327,25 +331,25 @@ struct
       { Cell.state = t |> to_cell_state
       ; Cell.pheno = t |> to_pheno
       }
+
+    let f = 0.000001  (* Probability of spontaneous ignition *)
+    let p = 0.1       (* Probability of spontaneous growth *)
+
+    let is_probable p =
+      (Random.float 1.0) <= p
+
+    let next t ~burning_neighbors =
+      match t, burning_neighbors with
+      | E, _ when is_probable p         -> T
+      | E, _                            -> E
+      | T, 0 when is_probable f         -> B
+      | T, _ when burning_neighbors > 0 -> B
+      | T, _                            -> T
+      | B, _                            -> E
   end
 
   let create () =
     Random.int 3 |> State.of_int |> State.to_cell
-
-  let f = 0.000001  (* Probability of spontaneous ignition *)
-  let p = 0.1       (* Probability of spontaneous growth *)
-
-  let is_probable p =
-    (Random.float 1.0) <= p
-
-  let next state ~burning_neighbors =
-    match state, burning_neighbors with
-    | State.E, _ when is_probable p         -> State.T
-    | State.E, _                            -> State.E
-    | State.T, 0 when is_probable f         -> State.B
-    | State.T, _ when burning_neighbors > 0 -> State.B
-    | State.T, _                            -> State.T
-    | State.B, _                            -> State.E
 
   let burning_neighbors neighbors =
     neighbors |> List.map ~f:State.of_cell_state
@@ -355,7 +359,7 @@ struct
 
   let transition ~self ~neighbors =
     self |> State.of_cell_state
-         |> next ~burning_neighbors:(burning_neighbors neighbors)
+         |> State.next ~burning_neighbors:(burning_neighbors neighbors)
          |> State.to_cell
 end
 
