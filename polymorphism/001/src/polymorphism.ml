@@ -211,7 +211,7 @@ struct
 
     val of_int : int -> t
 
-    val to_int : t -> int
+    val is_alive : t -> bool
 
     val to_cell : t -> Cell.t
 
@@ -227,9 +227,9 @@ struct
       | 1 -> A
       | _ -> assert false
 
-    let to_int = function
-      | D -> 0
-      | A -> 1
+    let is_alive = function
+      | D -> false
+      | A -> true
 
     let to_pheno = function
       | D -> PhenoType.create ' ' None
@@ -265,8 +265,8 @@ struct
 
   let count_of_live =
        List.map       ~f:State.of_cell_state
-    |- List.map       ~f:State.to_int
-    |- List.fold_left ~f:(+) ~init:0
+    |- List.filter    ~f:State.is_alive
+    |- List.length
 
   let transition ~self ~neighbors =
     self |> State.of_cell_state
@@ -284,8 +284,6 @@ struct
     val is_burning : t -> bool
 
     val of_int : int -> t
-
-    val to_int : t -> int
 
     val to_cell : t -> Cell.t
 
@@ -306,11 +304,6 @@ struct
       | 1 -> T
       | 2 -> B
       | _ -> assert false
-
-    let to_int = function
-      | E -> 0
-      | T -> 1
-      | B -> 2
 
     let to_pheno = function
       | E -> PhenoType.create ' ' None
@@ -355,8 +348,7 @@ struct
   let count_of_burning =
        List.map       ~f:State.of_cell_state
     |- List.filter    ~f:State.is_burning
-    |- List.map       ~f:State.to_int
-    |- List.fold_left ~f:(+) ~init:0
+    |- List.length
 
   let transition ~self ~neighbors =
     self |> State.of_cell_state
