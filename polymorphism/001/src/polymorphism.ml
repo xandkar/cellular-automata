@@ -209,7 +209,7 @@ struct
   sig
     type t = D | A
 
-    val of_int : int -> t
+    val random : unit -> t
 
     val is_alive : t -> bool
 
@@ -222,7 +222,8 @@ struct
   struct
     type t = D | A
 
-    let of_int = function
+    let random () =
+      match Random.int 2 with
       | 0 -> D
       | 1 -> A
       | _ -> assert false
@@ -260,8 +261,8 @@ struct
       | D -> D
   end
 
-  let create () =
-    Random.int 2 |> State.of_int |> State.to_cell
+  let create =
+    State.random |- State.to_cell
 
   let count_of_live =
        List.map    ~f:State.of_cell_state
@@ -283,7 +284,7 @@ struct
 
     val is_burning : t -> bool
 
-    val of_int : int -> t
+    val random : unit -> t
 
     val to_cell : t -> Cell.t
 
@@ -299,7 +300,8 @@ struct
       | T -> false
       | B -> true
 
-    let of_int = function
+    let random () =
+      match Random.int 3 with
       | 0 -> E
       | 1 -> T
       | 2 -> B
@@ -342,8 +344,8 @@ struct
       | B, _                            -> E
   end
 
-  let create () =
-    Random.int 3 |> State.of_int |> State.to_cell
+  let create =
+    State.random |- State.to_cell
 
   let count_of_burning =
        List.map    ~f:State.of_cell_state
