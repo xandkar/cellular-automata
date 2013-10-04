@@ -264,8 +264,8 @@ struct
     Random.int 2 |> State.of_int |> State.to_cell
 
   let count_of_live =
-       List.map       ~f:State.of_cell_state
-    |- List.filter    ~f:State.is_alive
+       List.map    ~f:State.of_cell_state
+    |- List.filter ~f:State.is_alive
     |- List.length
 
   let transition ~self ~neighbors =
@@ -346,8 +346,8 @@ struct
     Random.int 3 |> State.of_int |> State.to_cell
 
   let count_of_burning =
-       List.map       ~f:State.of_cell_state
-    |- List.filter    ~f:State.is_burning
+       List.map    ~f:State.of_cell_state
+    |- List.filter ~f:State.is_burning
     |- List.length
 
   let transition ~self ~neighbors =
