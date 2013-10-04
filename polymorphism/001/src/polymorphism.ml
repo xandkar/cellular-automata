@@ -51,7 +51,7 @@ sig
 
   type 'a t
 
-  val create : rs:int -> ks:int -> 'a -> 'a t
+  val make : rs:int -> ks:int -> 'a -> 'a t
 
   val get_neighbors : 'a t -> Point.t -> 'a list
 
@@ -100,7 +100,7 @@ struct
 
   type 'a t = 'a array array
 
-  let create ~rs ~ks x =
+  let make ~rs ~ks x =
     Array.make_matrix ~dimx:rs ~dimy:ks x
 
   let iter t ~f =
@@ -155,7 +155,7 @@ module PhenoType :
 sig
   type t
 
-  val create : char -> Terminal.color option -> t
+  val make : char -> Terminal.color option -> t
 
   val to_string : t -> string
 end =
@@ -164,7 +164,7 @@ struct
            ; character : char
            }
 
-  let create character color =
+  let make character color =
     {color; character}
 
   let to_string = function
@@ -195,7 +195,7 @@ end
 
 module type RULE =
 sig
-  val create : unit -> Cell.t
+  val init : unit -> Cell.t
 
   val transition : self:Cell.State.t
                 -> neighbors:Cell.State.t list
@@ -233,8 +233,8 @@ struct
       | A -> true
 
     let to_pheno = function
-      | D -> PhenoType.create ' ' None
-      | A -> PhenoType.create 'o' (Some `white)
+      | D -> PhenoType.make ' ' None
+      | A -> PhenoType.make 'o' (Some `white)
 
     let of_cell_state = function
       | Cell.State.Dead                      -> D
@@ -261,7 +261,7 @@ struct
       | D -> D
   end
 
-  let create =
+  let init =
     State.random |- State.to_cell
 
   let count_of_live =
@@ -308,9 +308,9 @@ struct
       | _ -> assert false
 
     let to_pheno = function
-      | E -> PhenoType.create ' ' None
-      | T -> PhenoType.create 'T' (Some `green)
-      | B -> PhenoType.create '#' (Some `red)
+      | E -> PhenoType.make ' ' None
+      | T -> PhenoType.make 'T' (Some `green)
+      | B -> PhenoType.make '#' (Some `red)
 
     let of_cell_state = function
       | Cell.State.Dead                      -> E
@@ -344,7 +344,7 @@ struct
       | B, _                            -> E
   end
 
-  let create =
+  let init =
     State.random |- State.to_cell
 
   let count_of_burning =
@@ -363,7 +363,7 @@ module Automaton :
 sig
   type t
 
-  val create  : rows:int
+  val make  : rows:int
              -> columns:int
              -> interval:float
              -> rules: (module RULE) list
@@ -381,17 +381,17 @@ struct
            ; bar      : string
            }
 
-  let create ~rows:rs ~columns:ks ~interval ~rules =
+  let make ~rows:rs ~columns:ks ~interval ~rules =
     let n = List.length rules in
     let init () =
       let rule = List.nth_exn rules (Random.int n) in
       let module Rule = (val rule : RULE) in
       { rule
-      ; data = Rule.create ()
+      ; data = Rule.init ()
       }
     in
     Terminal.clear ();
-    { grid     = Matrix.map ~f:init (Matrix.create ~rs ~ks ())
+    { grid     = Matrix.map ~f:init (Matrix.make ~rs ~ks ())
     ; interval = Time.Span.of_float interval
     ; bar      = String.make ks '-'
     }
@@ -436,7 +436,7 @@ let main interval () =
     ; (module ForestFire : RULE)
     ]
   in
-  Automaton.loop (Automaton.create ~rows:(rows - 3) ~columns ~interval ~rules)
+  Automaton.loop (Automaton.make ~rows:(rows - 3) ~columns ~interval ~rules)
 
 
 let spec =
