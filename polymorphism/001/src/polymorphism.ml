@@ -143,7 +143,7 @@ struct
 
   let neighborhood t point =
     List.map Direction.all ~f:Direction.to_offset
-    |> List.map ~f:(fun offset_point -> Point.(point + offset_point))
+    |> List.map ~f:(Point.(+) point)
     |> List.filter ~f:(is_within_bounds t)
 
   let get_neighbors t point =
