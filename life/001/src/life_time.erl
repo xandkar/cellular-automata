@@ -26,11 +26,11 @@
 
 -record(state, {x               :: integer()
                ,y               :: integer()
-               ,cells           :: list(atom())
+               ,cells           :: [atom()]
                ,num_cells       :: integer()
                ,num_dead        :: integer()
                ,num_alive       :: integer()
-               ,state_pairs     :: list(tuple(integer(), integer())) | []
+               ,state_pairs     :: [{integer(), integer()}]
                ,replies_pending :: integer()
                ,gen_id          :: integer()
                ,gen_began       :: erlang:timestamp()
