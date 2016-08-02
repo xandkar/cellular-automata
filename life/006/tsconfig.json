@@ -1,0 +1,14 @@
+{ "compilerOptions":
+    { "module"                     : "commonjs"
+    , "target"                     : "es5"
+    , "sourceMap"                  : false
+    , "noFallthroughCasesInSwitch" : true
+    }
+, "exclude":
+    [ "node_modules"
+    ]
+, "files":
+    [ "./typings/index.d.ts"
+    , "life.ts"
+    ]
+}
