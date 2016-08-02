@@ -4,6 +4,63 @@ type States = Array<State>;
 
 type Board = Array<States>;
 
+type GridLocation = {r: number, k: number};
+
+class Grid<T> {
+    private rows    : number;
+    private columns : number;
+    private cells   : Array<Array<T>>;
+
+    constructor(
+        {rows, columns, init} :
+        { rows    : number
+        , columns : number
+        , init    : (location: GridLocation) => T
+        }
+    )
+    {
+        this.rows    = rows;
+        this.columns = columns;
+        let cells = [];
+        for (let r = 0; r < rows; r++) {
+            cells[r] = [];
+            for (let k = 0; k < columns; k++) {
+                cells[r][k] = init({r: r, k: k})
+            };
+        };
+        this.cells = cells
+    };
+
+    moore_neighbors(origin : GridLocation) : Array<GridLocation> {
+        let offsets =
+            [ {r: -1, k: -1}, {r: -1, k: 0}, {r: -1, k: 1}
+            , {r:  0, k: -1},                {r:  0, k: 1}
+            , {r:  1, k: -1}, {r:  1, k: 0}, {r:  1, k: 1}
+            ];
+        let offset_to_location =
+            (offset) => {return {r: origin.r + offset.r, k: origin.k + offset.k}};
+        let locations = offsets.map(offset_to_location);
+        let is_location_within_bounds =
+            ({r, k}) => r >= 0 && k >= 0 && r < this.rows && k < this.columns;
+        return locations.filter(is_location_within_bounds)
+    };
+
+    mapi(f : (location: GridLocation) => T) {
+        let cells = [];
+        for (let r = 0; r < this.rows; r++) {
+            cells[r] = [];
+            for (let k = 0; k < this.columns; k++) {
+                let location = {r: r, k: k};
+                let neighbors = this.moore_neighbors(location);
+                cells[r][k] = f(location);
+            }
+        };
+        let init = ({r, k}) => cells[r][k];
+        let grid = new Grid({rows: this.rows, columns: this.columns, init: init});
+        return grid
+    };
+};
+
 let state_of_integer = (i : number) : State => {
     switch (i)
     { case 0 : return "Dead"
@@ -30,7 +87,7 @@ let board_new = ({rows, columns} : {rows: number, columns: number}) : Board => {
     return b
 };
 
-let board_neighbors = (b : Board, origin : {r: number, k: number}) : States => {
+let board_neighbors = (b : Board, origin : GridLocation) : States => {
     let rows = b.length;
     let cols = b[0].length;
     let offsets =
