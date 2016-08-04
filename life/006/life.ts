@@ -109,7 +109,7 @@ namespace Life {
             switch (i)
             { case 0 : return "Dead"
             ; case 1 : return "Alive"
-            ; default: throw("No known State for integer: " + i)
+            ; default: throw new RangeError("No known State for integer: " + i)
             }
         };
 
@@ -117,7 +117,7 @@ namespace Life {
             switch (t)
             { case "Dead" : return " "
             ; case "Alive": return "o"
-            ; default     : throw("Illegal member of Life.State.T: " + t)
+            ; default     : throw new TypeError("Illegal member of Life.State.T: " + t)
             }
         };
 
@@ -125,7 +125,7 @@ namespace Life {
             switch (t)
             { case "Dead" : return false
             ; case "Alive": return true
-            ; default     : throw("Illegal member of Life.State.T: " + t)
+            ; default     : throw new TypeError("Illegal member of Life.State.T: " + t)
             }
         };
 
