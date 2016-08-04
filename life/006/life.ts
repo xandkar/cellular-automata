@@ -4,7 +4,7 @@ type GridLocation = {r: number, k: number};
 
 interface GridInterface<A> {
     get            : (location: GridLocation) => A;
-    map            : (f : (location: GridLocation) => A) => Grid<A>;
+    map            : (f : (location: GridLocation) => A) => void;
     moore_neighbors: (origin : GridLocation) => Array<GridLocation>;
     print          : (toString : (A: A) => string) => void;
 };
@@ -61,9 +61,7 @@ class Grid<A> implements GridInterface<A> {
                 cells[r][k] = f(location);
             }
         };
-        const init = ({r, k}) => cells[r][k];
-        const grid = new Grid({rows: this.rows, columns: this.columns, init: init});
-        return grid
+        this.cells = cells;
     };
 
     private print_border(): void {
@@ -160,7 +158,7 @@ namespace Life {
         };
 
         next() : void {
-            const grid = this.grid.map(
+            this.grid.map(
                 (location) => {
                     const neighbor_locations = this.grid.moore_neighbors(location);
                     const neighbor_states = neighbor_locations.map((l) => this.grid.get(l));
@@ -170,7 +168,6 @@ namespace Life {
                     return state_1
                 }
             );
-            this.grid = grid
         };
 
         print() : void {
