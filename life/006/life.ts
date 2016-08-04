@@ -2,23 +2,23 @@
 
 type GridLocation = {r: number, k: number};
 
-interface GridInterface<T> {
-    get            : (location: GridLocation) => T;
-    map            : (f : (location: GridLocation) => T) => Grid<T>;
+interface GridInterface<A> {
+    get            : (location: GridLocation) => A;
+    map            : (f : (location: GridLocation) => A) => Grid<A>;
     moore_neighbors: (origin : GridLocation) => Array<GridLocation>;
-    print          : (toString : (T: T) => string) => void;
+    print          : (toString : (A: A) => string) => void;
 };
 
-class Grid<T> implements GridInterface<T> {
+class Grid<A> implements GridInterface<A> {
     private rows    : number;
     private columns : number;
-    private cells   : Array<Array<T>>;
+    private cells   : Array<Array<A>>;
 
     constructor(
         {rows, columns, init} :
         { rows    : number
         , columns : number
-        , init    : (location: GridLocation) => T
+        , init    : (location: GridLocation) => A
         }
     )
     {
@@ -34,7 +34,7 @@ class Grid<T> implements GridInterface<T> {
         this.cells = cells
     };
 
-    get({r, k}: GridLocation) : T {
+    get({r, k}: GridLocation) : A {
         return this.cells[r][k]
     };
 
@@ -52,7 +52,7 @@ class Grid<T> implements GridInterface<T> {
         return locations.filter(is_location_within_bounds)
     };
 
-    map(f : (location: GridLocation) => T) {
+    map(f : (location: GridLocation) => A) {
         const cells = [];
         for (let r = 0; r < this.rows; r++) {
             cells[r] = [];
@@ -91,91 +91,106 @@ class Grid<T> implements GridInterface<T> {
     };
 };
 
-type State = "Dead" | "Alive";
+namespace Terminal {
+    export const clear = () : void => {
+        process.stdout.write("\x1B[2J");
+    };
 
-type States = Array<State>;
-
-type Board = Grid<State>;
-
-const state_of_integer = (i : number) : State => {
-    switch (i)
-    { case 0 : return "Dead"
-    ; case 1 : return "Alive"
-    ; default: throw("No known State for integer: " + i)
-    }
+    export const reset = () : void => {
+        process.stdout.write("\x1B[1;1H");
+    };
 };
 
-const state_to_string = (state : State) : string => {
-    switch (state)
-    { case "Dead" : return " "
-    ; case "Alive": return "o"
-    ; default     : throw("Illegal member of State type: " + state)
-    }
+namespace Life {
+    namespace State {
+        export type T = "Dead" | "Alive";
+
+        export const of_integer = (i : number) : T => {
+            switch (i)
+            { case 0 : return "Dead"
+            ; case 1 : return "Alive"
+            ; default: throw("No known State for integer: " + i)
+            }
+        };
+
+        export const to_string = (t : T) : string => {
+            switch (t)
+            { case "Dead" : return " "
+            ; case "Alive": return "o"
+            ; default     : throw("Illegal member of Life.State.T: " + t)
+            }
+        };
+
+        export const is_alive = (t : T) : boolean => {
+            switch (t)
+            { case "Dead" : return false
+            ; case "Alive": return true
+            ; default     : throw("Illegal member of Life.State.T: " + t)
+            }
+        };
+
+        export const next = (t : T, neighbors_alive : number) : T => {
+            const is_cell_alive = is_alive(t);
+            if (is_cell_alive && neighbors_alive < 2) {
+                return "Dead"
+            } else if (is_cell_alive && neighbors_alive < 4) {
+                return "Alive"
+            } else if (is_cell_alive && neighbors_alive > 3) {
+                return "Dead"
+            } else if (!is_cell_alive && neighbors_alive === 3) {
+                return "Alive"
+            } else {
+                return t
+            }
+        };
+    };
+
+    export class Board {
+        private grid: Grid<State.T>;
+
+        constructor(
+            {rows, columns} :
+            { rows       : number
+            , columns    : number
+            }
+        )
+        {
+            const init = (_) => State.of_integer(Math.round(Math.random()));
+            this.grid = new Grid({rows: rows, columns: columns, init: init});
+        };
+
+        next() : void {
+            const grid = this.grid.map(
+                (location) => {
+                    const neighbor_locations = this.grid.moore_neighbors(location);
+                    const neighbor_states = neighbor_locations.map((l) => this.grid.get(l));
+                    const state_0 = this.grid.get(location);
+                    const neighbors_alive = neighbor_states.filter(State.is_alive).length;
+                    const state_1 = State.next(state_0, neighbors_alive);
+                    return state_1
+                }
+            );
+            this.grid = grid
+        };
+
+        print() : void {
+            this.grid.print(State.to_string)
+        };
+    };
 };
 
-const board_new = ({rows, columns} : {rows: number, columns: number}) : Board => {
-    const init = (_) => state_of_integer(Math.round(Math.random()));
-    return new Grid({rows: rows, columns: columns, init: init});
-};
-
-const state_is_alive = (s : State) : boolean => {
-    if (s === "Alive") {
-        return true
-    } else if (s === "Dead") {
-        return false
-    } else {
-        throw("Illegal member of State type: " + s)
-    }
-};
-
-const state_next = (state : State, neighbor_states : Array<State>) : State => {
-    const neighbors_alive = neighbor_states.filter(state_is_alive).length;
-    if (state === "Alive" && neighbors_alive < 2) {
-        return "Dead"
-    } else if (state === "Alive" && neighbors_alive < 4) {
-        return "Alive"
-    } else if (state === "Alive" && neighbors_alive > 3) {
-        return "Dead"
-    } else if (state === "Dead" && neighbors_alive === 3) {
-        return "Alive"
-    } else {
-        return state
-    }
-}
-
-const board_next = (b0 : Board) : Board => {
-    const b1 = b0.map(
-        (location) => {
-            const neighbor_locations = b0.moore_neighbors(location);
-            const neighbor_states = neighbor_locations.map((l) => b0.get(l));
-            const state_0 = b0.get(location);
-            const state_1 = state_next(state_0, neighbor_states);
-            return state_1
-        }
-    );
-    return b1
-};
-
-const console_clear = () : void => {
-    process.stdout.write("\x1B[2J");
-}
-
-const console_reset = () : void => {
-    process.stdout.write("\x1B[1;1H");
-}
-
-const board_loop = (b0 : Board) : void => {
-    console_reset();
-    b0.print(state_to_string);
-    const b1 = board_next(b0);
-    setTimeout(() => board_loop(b1), 250)
+const board_loop = (b : Life.Board) : void => {
+    Terminal.reset();
+    b.print();
+    b.next();
+    setTimeout(() => board_loop(b), 250)
 };
 
 const main = () : void => {
     const height = parseInt(process.argv[2])
     const width  = parseInt(process.argv[3])
-    const b = board_new({rows: height - 3, columns: width - 2});
-    console_clear();
+    const b = new Life.Board({rows: height - 3, columns: width - 2});
+    Terminal.clear();
     board_loop(b);
 };
 
