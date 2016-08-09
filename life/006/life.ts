@@ -53,15 +53,8 @@ class Grid<A> implements GridInterface<A> {
     };
 
     map(f : (location: GridLocation) => A) {
-        const cells = [];
-        for (let r = 0; r < this.rows; r++) {
-            cells[r] = [];
-            for (let k = 0; k < this.columns; k++) {
-                const location = {r: r, k: k};
-                cells[r][k] = f(location);
-            }
-        };
-        this.cells = cells;
+        this.cells =
+            this.cells.map((row, r) => row.map((_, k) => f({r: r, k: k})));
     };
 
     private print_border(): void {
