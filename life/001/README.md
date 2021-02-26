@@ -26,7 +26,7 @@ simply log the statistics for each run of the simulation.
 
 Usage
 -----
-* Get: `git clone git://github.com/ibnfirnas/life.git`
+* Get: `git clone git://github.com/xandkar/life.git`
 * Enter: `cd life/001`
 * Build: `make`
 * Run: `./bin/life`
@@ -34,4 +34,4 @@ Usage
 
 Doodles
 -------
-![Doodles](https://raw.github.com/ibnfirnas/cellular-automata/master/life/001/doodles.jpg)
+![Doodles](https://raw.github.com/xandkar/cellular-automata/master/life/001/doodles.jpg)
