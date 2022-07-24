@@ -105,7 +105,6 @@ fn main() {
             Some((c, r)) => (c - 5, r - 5),
         };
 
-    let mut temp;
     let mut curr = vec![vec![State::Dead; ncols]; nrows];
     let mut next = vec![vec![State::Dead; ncols]; nrows];
     let mut buff = vec![' ' as u8; ncols * nrows + nrows];
@@ -120,9 +119,7 @@ fn main() {
         output.write_all(ANSI_TERM_RESET).unwrap();
         output.write_all(&buff).unwrap();
         board_next(&curr, &mut next);
-        temp = curr;
-        curr = next;
-        next = temp;
+        std::mem::swap(&mut curr, &mut next);
         std::thread::sleep(std::time::Duration::from_millis(100));
     }
 }
