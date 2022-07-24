@@ -107,7 +107,7 @@ fn main() {
 
     let mut curr = vec![vec![State::Dead; ncols]; nrows];
     let mut next = vec![vec![State::Dead; ncols]; nrows];
-    let mut buff = vec![' ' as u8; ncols * nrows + nrows];
+    let mut buff = vec!['\0' as u8; ncols * nrows + nrows];
     let mut output = std::io::stdout();
 
     output.write_all(ANSI_TERM_CLEAR).unwrap();
