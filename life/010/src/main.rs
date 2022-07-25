@@ -29,8 +29,8 @@ const ANSI_TERM_RESET: &[u8; 6] = b"\x1B[1;1H";
 
 fn state_display(s: &State) -> u8 {
     match s {
-        State::Dead => ' ' as u8,
-        State::Alive => 'o' as u8,
+        State::Dead => b' ',
+        State::Alive => b'o',
     }
 }
 
@@ -43,7 +43,7 @@ fn state_next(state: &State, neighbors_alive: &i32) -> State {
     }
 }
 
-fn board_init(board: &mut Board) -> () {
+fn board_init(board: &mut Board) {
     for row in board {
         for cell in row {
             *cell = if rand::random() { State::Alive } else { State::Dead };
@@ -55,7 +55,7 @@ fn is_inbounds(ncols: usize, nrows: usize, l: &Loc) -> bool {
     l.r > 0 && l.r < nrows as i32 && l.c > 0 && l.c < ncols as i32
 }
 
-fn board_next(curr: &Board, next: &mut Board) -> () {
+fn board_next(curr: &Board, next: &mut Board) {
     let nrows = curr.len();
     let ncols = curr[0].len();
 
@@ -81,7 +81,7 @@ fn board_next(curr: &Board, next: &mut Board) -> () {
     }
 }
 
-fn board_display(b: &Board, buf: &mut [u8]) -> () {
+fn board_display(b: &Board, buf: &mut [u8]) {
     // TODO Borders.
     // TODO Stats: gen, dead, alive, death rate, clusters.
     let mut i = 0;
@@ -90,7 +90,7 @@ fn board_display(b: &Board, buf: &mut [u8]) -> () {
             buf[i] = state_display(&*cell);
             i += 1;
         }
-        buf[i] = '\n' as u8;
+        buf[i] = b'\n';
         i += 1;
     }
 }
@@ -107,7 +107,7 @@ fn main() {
 
     let mut curr = vec![vec![State::Dead; ncols]; nrows];
     let mut next = vec![vec![State::Dead; ncols]; nrows];
-    let mut buff = vec!['\0' as u8; ncols * nrows + nrows];
+    let mut buff = vec![b'\0'; ncols * nrows + nrows];
     let mut output = std::io::stdout();
 
     output.write_all(ANSI_TERM_CLEAR).unwrap();
