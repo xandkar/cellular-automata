@@ -59,23 +59,15 @@ fn board_next(curr: &Board, next: &mut Board) {
     let nrows = curr.len();
     let ncols = curr[0].len();
 
-    let mut curr_neighbors_alive;
-
     for r in 0..nrows {
         for c in 0..ncols {
-            curr_neighbors_alive = 0;
-            for o in OFFSETS {
-                let neighbor = Loc {
-                    r: (r as i32) + o.r,
-                    c: (c as i32) + o.c,
-                };
-                if is_inbounds(ncols, nrows, &neighbor) {
-                    match &curr[neighbor.r as usize][neighbor.c as usize] {
-                        State::Alive => curr_neighbors_alive += 1,
-                        State::Dead => (),
-                    }
-                }
-            }
+            let curr_neighbors_alive =
+                OFFSETS.iter()
+                    .map(|o| Loc {r: (r as i32) + o.r, c: (c as i32) + o.c})
+                    .filter(|loc| is_inbounds(ncols, nrows, &loc))
+                    .map(|loc| &curr[loc.r as usize][loc.c as usize])
+                    .map(|s| match s {State::Alive => 1, State::Dead => 0})
+                    .sum();
             next[r][c] = state_next(&curr[r][c], &curr_neighbors_alive);
         }
     }
