@@ -106,6 +106,7 @@ fn main() {
     board_init(&mut curr);
 
     // TODO Controls: [p]lay/pause, [s]top, [b]ack, [f]orward.
+    // TODO ncurses for efficient printing and input reading: https://github.com/jeaye/ncurses-rs
     loop {
         board_display(&curr, &mut buff);
         output.write_all(ANSI_TERM_RESET).unwrap();
